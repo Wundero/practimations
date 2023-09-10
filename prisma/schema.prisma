@@ -6,37 +6,118 @@ generator client {
 }
 
 datasource db {
-    provider = "sqlite"
-    // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-    // Further reading:
-    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-    url      = env("DATABASE_URL")
+    provider     = "mysql"
+    url          = env("DATABASE_URL")
+    relationMode = "prisma"
 }
 
-model Example {
-    id        String   @id @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+model Category {
+    id     Int    @id @default(autoincrement())
+    name   String @unique
+    room   Room   @relation(fields: [roomId], references: [id])
+    roomId Int
+
+    votes   Vote[]
+    results Result[]
+
+    @@index([roomId])
+}
+
+model Vote {
+    id         BigInt   @id @default(autoincrement())
+    userId     String
+    user       User     @relation(fields: [userId], references: [id])
+    ticket     Ticket   @relation(fields: [ticketId], references: [id])
+    ticketId   Int
+    category   Category @relation(fields: [categoryId], references: [id])
+    categoryId Int
+
+    value Int
+
+    @@index([ticketId])
+    @@index([categoryId])
+    @@index([userId])
+    @@index([categoryId, ticketId])
+    @@unique([userId, ticketId, categoryId])
+}
+
+model Result {
+    id BigInt @id @default(autoincrement())
+
+    ticket     Ticket   @relation(fields: [ticketId], references: [id])
+    ticketId   Int
+    category   Category @relation(fields: [categoryId], references: [id])
+    categoryId Int
+
+    value Int
+
+    @@index([ticketId])
+    @@index([categoryId])
+    @@index([categoryId, ticketId])
+}
+
+enum TicketType {
+    TASK
+    BUG
+    STORY
+    EPIC
+}
+
+model Ticket {
+    id       Int        @id @default(autoincrement())
+    ticketId String     @unique
+    title    String
+    url      String
+    type     TicketType @default(TASK)
+
+    selected Boolean @default(false)
+    voting   Boolean @default(false)
+    done     Boolean @default(false)
+
+    room   Room @relation(fields: [roomId], references: [id])
+    roomId Int
+
+    votes   Vote[]
+    results Result[]
+
+    @@index([roomId])
+}
+
+model Room {
+    id Int @id @default(autoincrement())
+
+    name String
+    slug String @unique @default(cuid())
+
+    owner   User   @relation(fields: [ownerId], references: [id], name: "RoomOwner", onDelete: NoAction, onUpdate: NoAction)
+    ownerId String
+
+    tickets    Ticket[]
+    categories Category[]
+    users      User[]     @relation(name: "UserCurrentRoom")
+
+    @@index([ownerId])
 }
 
 // Necessary for Next auth
 model Account {
-    id                String  @id @default(cuid())
-    userId            String
-    type              String
-    provider          String
-    providerAccountId String
-    refresh_token     String? // @db.Text
-    access_token      String? // @db.Text
-    expires_at        Int?
-    token_type        String?
-    scope             String?
-    id_token          String? // @db.Text
-    session_state     String?
-    user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id                       String  @id @default(cuid())
+    userId                   String
+    type                     String
+    provider                 String
+    providerAccountId        String
+    refresh_token            String? @db.Text
+    refresh_token_expires_in Int?
+    access_token             String? @db.Text
+    expires_at               Int?
+    token_type               String?
+    scope                    String?
+    id_token                 String? @db.Text
+    session_state            String?
+    user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@unique([provider, providerAccountId])
+    @@index([userId])
 }
 
 model Session {
@@ -45,6 +126,8 @@ model Session {
     userId       String
     expires      DateTime
     user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
 }
 
 model User {
@@ -55,6 +138,13 @@ model User {
     image         String?
     accounts      Account[]
     sessions      Session[]
+    currentRoom   Room?     @relation(fields: [currentRoomId], references: [id], name: "UserCurrentRoom")
+    currentRoomId Int?
+
+    ownedRooms Room[] @relation("RoomOwner")
+    Vote       Vote[]
+
+    @@index([currentRoomId])
 }
 
 model VerificationToken {

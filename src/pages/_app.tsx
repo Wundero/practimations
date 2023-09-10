@@ -1,6 +1,8 @@
 import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
+import { ThemeProvider } from "next-themes";
 import { type AppType } from "next/app";
+import { PusherProvider } from "~/hooks/usePusher";
 
 import { api } from "~/utils/api";
 
@@ -11,9 +13,13 @@ const MyApp: AppType<{ session: Session | null }> = ({
   pageProps: { session, ...pageProps },
 }) => {
   return (
-    <SessionProvider session={session}>
-      <Component {...pageProps} />
-    </SessionProvider>
+    <ThemeProvider>
+      <SessionProvider session={session}>
+        <PusherProvider>
+          <Component {...pageProps} />
+        </PusherProvider>
+      </SessionProvider>
+    </ThemeProvider>
   );
 };
 

@@ -1,11 +1,127 @@
-import { signIn, signOut, useSession } from "next-auth/react";
+import type { GetServerSideProps } from "next";
+import { signIn, useSession } from "next-auth/react";
 import Head from "next/head";
-import Link from "next/link";
+import { getServerAuthSession } from "~/server/auth";
+import { FaGithub } from "react-icons/fa";
 
+import JoinRoomModal from "~/components/joinRoomModal";
+import { useState } from "react";
+import CreateRoomModal from "~/components/createRoomModal";
 import { api } from "~/utils/api";
+import Link from "next/link";
+import { MdClose } from "react-icons/md";
+import ConfirmModal from "~/components/confirmModal";
+
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const session = await getServerAuthSession(ctx);
+  return {
+    props: {
+      session,
+    },
+  };
+};
+
+function RoomInput() {
+  const [joinDialogOpen, setJoinDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
+  const [confirmDialog, setConfirmDialog] = useState<{
+    slug: string;
+    name: string;
+  } | null>(null);
+
+  const myRooms = api.main.getMyRooms.useQuery();
+
+  const utils = api.useContext();
+
+  const deleteRoomMutation = api.main.deleteRoom.useMutation();
+
+  return (
+    <>
+      <div className="flex gap-4">
+        <button className="btn" onClick={() => setCreateDialogOpen(true)}>
+          Create a room
+        </button>
+        <button className="btn" onClick={() => setJoinDialogOpen(true)}>
+          Join a room
+        </button>
+        <JoinRoomModal
+          open={joinDialogOpen}
+          onClose={() => setJoinDialogOpen(false)}
+        />
+        <CreateRoomModal
+          open={createDialogOpen}
+          onClose={() => setCreateDialogOpen(false)}
+        />
+      </div>
+      <ConfirmModal
+        open={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        loading={deleteRoomMutation.isLoading}
+        onConfirm={() => {
+          deleteRoomMutation.mutate(
+            { slug: confirmDialog!.slug },
+            {
+              onSuccess() {
+                setConfirmDialog(null);
+                utils.main.getMyRooms.invalidate().catch(console.error);
+              },
+            },
+          );
+        }}
+      >
+        Are you sure you want to delete{" "}
+        <span className="font-bold">{confirmDialog?.name}</span>?
+      </ConfirmModal>
+      <div className="flex flex-col gap-2">
+        <span className="text-xl">My Rooms:</span>
+        {myRooms.status === "loading" ? (
+          <div>Loading...</div>
+        ) : myRooms.data?.length === 0 ? (
+          <div>No rooms yet</div>
+        ) : (
+          myRooms.data?.map((room) => (
+            <div className="flex items-center gap-2" key={room.slug}>
+              <Link href={`/room/${room.slug}`} className="link">
+                {room.name}
+              </Link>
+              <button
+                className="btn btn-circle btn-ghost btn-xs"
+                onClick={() => {
+                  setConfirmDialog({
+                    slug: room.slug,
+                    name: room.name,
+                  });
+                }}
+              >
+                <MdClose />
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+    </>
+  );
+}
+
+function Unauthenticated() {
+  return (
+    <button
+      onClick={() => {
+        signIn("github").catch((e) => {
+          console.error(e);
+        });
+      }}
+      className="btn btn-primary btn-outline"
+    >
+      <FaGithub size={24} />
+      Sign in with GitHub
+    </button>
+  );
+}
 
 export default function Home() {
-  const hello = api.example.hello.useQuery({ text: "from tRPC" });
+  const session = useSession();
 
   return (
     <>
@@ -17,64 +133,23 @@ export default function Home() {
       <main className=" flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c]">
         <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
           <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-[5rem]">
-            Create <span className="text-[hsl(280,100%,70%)]">T3</span> App
+            <span className="text-[hsl(280,100%,70%)]">Practimations</span>
           </h1>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-            <Link
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 text-white hover:bg-white/20"
-              href="https://create.t3.gg/en/usage/first-steps"
-              target="_blank"
-            >
-              <h3 className="text-2xl font-bold">First Steps →</h3>
-              <div className="text-lg">
-                Just the basics - Everything you need to know to set up your
-                database and authentication.
-              </div>
-            </Link>
-            <Link
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 text-white hover:bg-white/20"
-              href="https://create.t3.gg/en/introduction"
-              target="_blank"
-            >
-              <h3 className="text-2xl font-bold">Documentation →</h3>
-              <div className="text-lg">
-                Learn more about Create T3 App, the libraries it uses, and how
-                to deploy it.
-              </div>
-            </Link>
-          </div>
+          <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-[3rem]">
+            <span>Estimates for the </span>
+            <span className="text-[hsl(280,100%,70%)]">soul</span>
+          </h2>
           <div className="flex flex-col items-center gap-2">
-            <p className="text-2xl text-white">
-              {hello.data ? hello.data.greeting : "Loading tRPC query..."}
-            </p>
-            <AuthShowcase />
+            {session.status === "loading" ? (
+              <span className="loading loading-dots text-primary"></span>
+            ) : session.status === "unauthenticated" ? (
+              <Unauthenticated />
+            ) : (
+              <RoomInput />
+            )}
           </div>
         </div>
       </main>
     </>
-  );
-}
-
-function AuthShowcase() {
-  const { data: sessionData } = useSession();
-
-  const { data: secretMessage } = api.example.getSecretMessage.useQuery(
-    undefined, // no input
-    { enabled: sessionData?.user !== undefined }
-  );
-
-  return (
-    <div className="flex flex-col items-center justify-center gap-4">
-      <p className="text-center text-2xl text-white">
-        {sessionData && <span>Logged in as {sessionData.user?.name}</span>}
-        {secretMessage && <span> - {secretMessage}</span>}
-      </p>
-      <button
-        className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
-        onClick={sessionData ? () => void signOut() : () => void signIn()}
-      >
-        {sessionData ? "Sign out" : "Sign in"}
-      </button>
-    </div>
   );
 }

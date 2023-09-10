@@ -15,6 +15,8 @@ import { ZodError } from "zod";
 
 import { getServerAuthSession } from "~/server/auth";
 import { prisma } from "~/server/db";
+import { pusher } from "../integrations/pusher";
+import type { GetServerSidePropsContext } from "next";
 
 /**
  * 1. CONTEXT
@@ -42,6 +44,7 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
     session: opts.session,
     prisma,
+    pusher,
   };
 };
 
@@ -51,7 +54,14 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
  *
  * @see https://trpc.io/docs/context
  */
-export const createTRPCContext = async (opts: CreateNextContextOptions) => {
+export const createTRPCContext = async (
+  opts:
+    | CreateNextContextOptions
+    | {
+        req: GetServerSidePropsContext["req"];
+        res: GetServerSidePropsContext["res"];
+      },
+) => {
   const { req, res } = opts;
 
   // Get the session from the server using the getServerSession wrapper function

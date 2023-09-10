@@ -17,9 +17,10 @@ export default function CreateRoomModal(props: {
   const [categories, setCategories] = useState<string[]>([
     "Complexity",
     "Effort",
-    "Risk"
+    "Risk",
   ]);
   const [currentCategory, setCurrentCategory] = useState("");
+  const [loading, setLoading] = useState(false);
 
   return (
     <HtmlDialog {...props}>
@@ -40,10 +41,10 @@ export default function CreateRoomModal(props: {
               return (
                 <span
                   key={category}
-                  className={cn("badge capitalize badge-lg", {
+                  className={cn("badge badge-lg capitalize", {
                     "badge-info": i % 3 === 0,
                     "badge-success": i % 3 === 1,
-                    'badge-secondary': i % 3 === 2,
+                    "badge-secondary": i % 3 === 2,
                   })}
                 >
                   <button
@@ -52,7 +53,7 @@ export default function CreateRoomModal(props: {
                     }}
                     className="btn btn-circle btn-ghost btn-xs -ml-2"
                   >
-                    <MdOutlineClose size={16}/>
+                    <MdOutlineClose size={16} />
                   </button>
                   {category}
                 </span>
@@ -83,7 +84,11 @@ export default function CreateRoomModal(props: {
         <div className="modal-action">
           <button
             className="btn"
-            disabled={createMutation.isLoading || name.length === 0 || categories.length === 0}
+            disabled={
+              createMutation.isLoading ||
+              name.length === 0 ||
+              categories.length === 0
+            }
             onClick={() => {
               createMutation.mutate(
                 {
@@ -92,6 +97,7 @@ export default function CreateRoomModal(props: {
                 },
                 {
                   onSuccess: (data) => {
+                    setLoading(true);
                     router.push("/room/" + data.slug).catch((e) => {
                       console.error(e);
                     });
@@ -100,7 +106,7 @@ export default function CreateRoomModal(props: {
               );
             }}
           >
-            {createMutation.isLoading ? (
+            {createMutation.isLoading || loading ? (
               <>
                 <span className="loading loading-spinner"></span>Creating...
               </>

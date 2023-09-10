@@ -86,6 +86,7 @@ export default function CreateRoomModal(props: {
             className="btn"
             disabled={
               createMutation.isLoading ||
+              loading ||
               name.length === 0 ||
               categories.length === 0
             }

@@ -450,7 +450,7 @@ function Room({ id }: RoomProps) {
             className="btn btn-circle btn-ghost btn-sm"
             onClick={() => {
               navigator.clipboard
-                .writeText(`${getBaseUrl()}/join/${room.slug}`)
+                .writeText(`${window.location.origin}/join/${room.slug}`)
                 .catch(console.error);
               setShowCopyMsg(true);
               debouncedSetShowCopyMsg(false);

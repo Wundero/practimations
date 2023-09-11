@@ -196,12 +196,9 @@ function Room({ id }: RoomProps) {
         default:
           break;
       }
-      if (typeof data !== "string") {
-        console.log("not string", typeof data, { data });
-        return;
-      }
       const eventKey = event as Event;
-      const ed = superjson.parse<Data<typeof eventKey>>(data);
+      // @ts-expect-error >:I
+      const ed = superjson.deserialize<Data<typeof eventKey>>(data);
 
       if (ed.ignoreUser === session.data?.user.id) {
         // Ignore events from the current user

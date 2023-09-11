@@ -79,7 +79,7 @@ function RoomInput() {
         Are you sure you want to delete{" "}
         <span className="font-bold">{confirmDialog?.name}</span>?
       </ConfirmModal>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 text-white">
         <span className="text-xl">My Rooms:</span>
         {myRooms.status === "loading" ? (
           <div>Loading...</div>

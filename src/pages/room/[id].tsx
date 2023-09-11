@@ -159,9 +159,9 @@ function Room({ id }: RoomProps) {
 
   const handlePusherEvent = useCallback(
     (event: string, data: unknown) => {
-      if (process.env.NODE_ENV === "development") {
+      // if (process.env.NODE_ENV === "development") {
         console.log("RECEIVED PUSHER EVENT:", event, data);
-      }
+      // }
       // Nonstandard events (pusher, room deletion) - these cannot be skipped for current user
       switch (event) {
         case "pusher:subscription_succeeded": {
@@ -197,6 +197,7 @@ function Room({ id }: RoomProps) {
           break;
       }
       if (typeof data !== "string") {
+        console.log('not string')
         return;
       }
       const eventKey = event as Event;
@@ -204,6 +205,7 @@ function Room({ id }: RoomProps) {
 
       if (ed.ignoreUser === session.data?.user.id) {
         // Ignore events from the current user
+        console.log('current user')
         return;
       }
       switch (eventKey) {

@@ -178,9 +178,30 @@ function Room({ id }: RoomProps) {
           return;
         }
         case "pusher:member_added": {
+          const dx = data as { id: string; info: PusherMember };
           setPusherMembers((old) => {
-            return [...old, (data as { id: string; info: PusherMember }).id];
+            return [...old, dx.id];
           });
+          utils.main.getRoom.setData({ slug: id }, (prev) => {
+            if (!prev) {
+              return prev;
+            }
+            return {
+              ...prev,
+              users: [
+                ...prev.users,
+                {
+                  id: dx.id,
+                  name: dx.info.name,
+                  image: dx.info.image,
+                  email: null,
+                  emailVerified: null,
+                  currentRoomId: prev.id,
+                },
+              ],
+            };
+          });
+          utils.main.getRoom.invalidate({ slug: id }).catch(console.error);
           return;
         }
         case "pusher:member_removed": {
@@ -224,6 +245,22 @@ function Room({ id }: RoomProps) {
                 }),
               ],
             };
+          });
+          break;
+        }
+        case "userLeave": {
+          const { eventData } = ed as Data<"userLeave">;
+          utils.main.getRoom.setData({ slug: id }, (prev) => {
+            if (!prev) {
+              return prev;
+            }
+            return {
+              ...prev,
+              users: prev.users.filter((user) => user.id !== eventData.user),
+            };
+          });
+          setPusherMembers((old) => {
+            return old.filter((user) => user !== eventData.user);
           });
           break;
         }

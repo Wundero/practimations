@@ -168,7 +168,7 @@ export const mainRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const { prisma, session } = ctx;
+      const { prisma, session, pusher } = ctx;
       const room = await prisma.room.findUnique({
         where: {
           slug: input.slug,
@@ -191,11 +191,27 @@ export const mainRouter = createTRPCRouter({
         where: {
           id: session.user.id,
         },
+        include: {
+          currentRoom: true,
+        },
       });
       if (!user) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "User not found",
+        });
+      }
+      const oldRoom = user.currentRoom;
+      if (oldRoom) {
+        await pusher.trigger({
+          channel: getChannelName(oldRoom.slug),
+          event: "userLeave",
+          data: {
+            ignoreUser: session.user.id,
+            eventData: {
+              user: session.user.id,
+            },
+          },
         });
       }
       await prisma.user.update({
@@ -455,7 +471,7 @@ export const mainRouter = createTRPCRouter({
           ignoreUser: session.user.id,
           eventData: {
             user: session.user.id,
-            votes: vote
+            votes: vote,
           },
         },
       });

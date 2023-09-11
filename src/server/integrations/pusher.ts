@@ -67,6 +67,11 @@ export const pusherConfig = {
       }),
     ),
   ),
+  userLeave: sn(
+    z.object({
+      user: z.string(),
+    }),
+  ),
   deleteTickets: sn(z.array(z.number())),
   selectTicket: sn(
     z.object({

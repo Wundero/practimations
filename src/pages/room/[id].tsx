@@ -22,6 +22,8 @@ import {
 } from "react-icons/md";
 import { serverSideHelpers } from "~/server/api/ssr";
 import Link from "next/link";
+import type { Event, Data } from "~/server/integrations/pusher";
+import superjson from "superjson";
 
 type User = {
   id: string;
@@ -151,42 +153,227 @@ function Room({ id }: RoomProps) {
 
   const utils = api.useContext();
 
+  // List of present user ids for presence detection stuff
   const [pusherMembers, setPusherMembers] = useState<string[]>([]);
+  const session = useSession();
 
-  const handlePusherEvent = useCallback((event: string, data: unknown) => {
-    console.log(event, data);
-    switch (event) {
-      case "pusher:subscription_succeeded": {
-        const { members } = data as {
-          members: Record<string, PusherMember>;
-          count: number;
-          myID: string;
-          me: {
-            id: string;
-            info: PusherMember;
+  const handlePusherEvent = useCallback(
+    (event: string, data: unknown) => {
+      if (process.env.NODE_ENV === "development") {
+        console.log("RECEIVED PUSHER EVENT:", event, data);
+      }
+      // Nonstandard events (pusher, room deletion) - these cannot be skipped for current user
+      switch (event) {
+        case "pusher:subscription_succeeded": {
+          const { members } = data as {
+            members: Record<string, PusherMember>;
+            count: number;
+            myID: string;
+            me: {
+              id: string;
+              info: PusherMember;
+            };
           };
-        };
-        setPusherMembers(Object.keys(members));
-        break;
+          setPusherMembers(Object.keys(members));
+          return;
+        }
+        case "pusher:member_added": {
+          setPusherMembers((old) => {
+            return [...old, (data as { id: string; info: PusherMember }).id];
+          });
+          return;
+        }
+        case "pusher:member_removed": {
+          setPusherMembers((old) => {
+            return old.filter((id) => id !== (data as { id: string }).id);
+          });
+          return;
+        }
+        case "deleteRoom": {
+          router.push("/").catch(console.error);
+          return;
+        }
+        default:
+          break;
       }
-      // TODO these could be smarter since they have the necessary data
-      case "newTickets":
-      case "updateVotes":
-      case "selectTicket":
-      case "completeTicket":
-      case "setCanVote":
-      case "updateVotes":
-      case "clearVotes":
-      case "deleteTickets":
-        utils.main.getRoom.invalidate({ slug: id }).catch(console.error);
-        break;
-      case "deleteRoom": {
-        router.push("/").catch(console.error);
+      if (typeof data !== "string") {
+        return;
       }
-      default:
-        break;
-    }
-  }, [id, router, utils]);
+      const eventKey = event as Event;
+      const ed = superjson.parse<Data<typeof eventKey>>(data);
+
+      if (ed.ignoreUser === session.data?.user.id) {
+        // Ignore events from the current user
+        return;
+      }
+      switch (eventKey) {
+        case "newTickets": {
+          const { eventData } = ed as Data<"newTickets">;
+          utils.main.getRoom.setData({ slug: id }, (prev) => {
+            if (!prev) {
+              return prev;
+            }
+            return {
+              ...prev,
+              tickets: [
+                ...prev.tickets,
+                ...eventData.map((ticket) => {
+                  return {
+                    ...ticket,
+                    votes: [],
+                    results: [],
+                  };
+                }),
+              ],
+            };
+          });
+          break;
+        }
+        case "deleteTickets": {
+          const { eventData } = ed as Data<"deleteTickets">;
+          utils.main.getRoom.setData({ slug: id }, (prev) => {
+            if (!prev) {
+              return prev;
+            }
+            return {
+              ...prev,
+              tickets: prev.tickets.filter(
+                (ticket) => !eventData.includes(ticket.id),
+              ),
+            };
+          });
+          break;
+        }
+        case "updateVotes": {
+          const { eventData } = ed as Data<"updateVotes">;
+          utils.main.getRoom.setData({ slug: id }, (prev) => {
+            if (!prev) {
+              return prev;
+            }
+            return {
+              ...prev,
+              tickets: prev.tickets.map((ticket) => {
+                if (ticket.selected) {
+                  return {
+                    ...ticket,
+                    votes: [
+                      ...ticket.votes.filter((vote) => {
+                        return vote.userId !== eventData.user;
+                      }),
+                      ...eventData.votes,
+                    ],
+                  };
+                }
+                return ticket;
+              }),
+            };
+          });
+          break;
+        }
+        case "selectTicket": {
+          const { eventData } = ed as Data<"selectTicket">;
+          utils.main.getRoom.setData({ slug: id }, (prev) => {
+            if (!prev) {
+              return prev;
+            }
+            return {
+              ...prev,
+              tickets: prev.tickets.map((ticket) => {
+                if (ticket.id === eventData.id) {
+                  return {
+                    ...ticket,
+                    selected: true,
+                  };
+                } else {
+                  return {
+                    ...ticket,
+                    selected: false,
+                  };
+                }
+              }),
+            };
+          });
+          break;
+        }
+        case "completeTicket": {
+          const { eventData } = ed as Data<"completeTicket">;
+          utils.main.getRoom.setData({ slug: id }, (prev) => {
+            if (!prev) {
+              return prev;
+            }
+            return {
+              ...prev,
+              tickets: prev.tickets.map((ticket) => {
+                if (ticket.id === eventData.id) {
+                  return {
+                    ...ticket,
+                    done: true,
+                    results: eventData.results,
+                  };
+                } else {
+                  return ticket;
+                }
+              }),
+            };
+          });
+          break;
+        }
+        case "setCanVote": {
+          const { eventData } = ed as Data<"setCanVote">;
+          utils.main.getRoom.setData({ slug: id }, (prev) => {
+            if (!prev) {
+              return prev;
+            }
+            return {
+              ...prev,
+              tickets: prev.tickets.map((ticket) => {
+                if (ticket.selected) {
+                  return {
+                    ...ticket,
+                    voting: eventData.canVote,
+                  };
+                } else {
+                  return ticket;
+                }
+              }),
+            };
+          });
+          break;
+        }
+        case "clearVotes": {
+          const { eventData } = ed as Data<"clearVotes">;
+          utils.main.getRoom.setData({ slug: id }, (prev) => {
+            if (!prev) {
+              return prev;
+            }
+            return {
+              ...prev,
+              tickets: prev.tickets.map((ticket) => {
+                if (ticket.selected) {
+                  return {
+                    ...ticket,
+                    votes:
+                      eventData === "all"
+                        ? []
+                        : ticket.votes.filter((vote) => {
+                            return vote.categoryId !== eventData.category;
+                          }),
+                  };
+                } else {
+                  return ticket;
+                }
+              }),
+            };
+          });
+          break;
+        }
+        default:
+          break;
+      }
+      utils.main.getRoom.invalidate({ slug: id }).catch(console.error);
+    },
+    [id, router, utils, session],
+  );
 
   useEffect(() => {
     if (channel) {
@@ -198,7 +385,6 @@ function Room({ id }: RoomProps) {
   }, [channel, handlePusherEvent]);
 
   const [addTicketsOpen, setAddTicketsOpen] = useState(false);
-  const session = useSession();
 
   const room = api.main.getRoom.useQuery({ slug: id }).data;
 
@@ -390,6 +576,7 @@ function Room({ id }: RoomProps) {
                                   return {
                                     ...t,
                                     selected: true,
+                                    voting: true,
                                   };
                                 } else {
                                   return {
@@ -400,6 +587,15 @@ function Room({ id }: RoomProps) {
                               }),
                             };
                           },
+                        );
+                        setMyVotes(
+                          room.categories.reduce(
+                            (acc, category) => {
+                              acc[category.id] = 1;
+                              return acc;
+                            },
+                            {} as Record<number, number>,
+                          ),
                         );
                         selectTicketMutation.mutate(
                           {
@@ -530,7 +726,7 @@ function Room({ id }: RoomProps) {
                           {(
                             selectedTicket.votes.reduce((acc, r) => {
                               return acc + r.value;
-                            }, 0) / selectedTicket.votes.length
+                            }, 0) / (selectedTicket.votes.length || 1)
                           ).toFixed(1)}
                         </span>
                       </div>

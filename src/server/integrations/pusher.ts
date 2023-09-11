@@ -1,6 +1,7 @@
 import Pusher from "pusher";
 import { env } from "~/env.mjs";
 import { type ZodType, z } from "zod";
+import superjson from "superjson";
 
 export const _pusher = new Pusher({
   appId: env.PUSHER_APP_ID,
@@ -10,38 +11,81 @@ export const _pusher = new Pusher({
   useTLS: true,
 });
 
-// Type: Record<channel, Record<event, ZodType>>
+const standardData = z.object({
+  ignoreUser: z.string().optional(),
+});
+
+const ticketType = z.enum(["BUG", "TASK", "STORY", "EPIC"]);
+
+function sn<T extends ZodType>(type: T) {
+  return z.object({
+    ...standardData.shape,
+    eventData: type,
+  });
+}
 export const pusherConfig = {
-  updateVotes: z.object({
-    user: z.string(),
-    votes: z.array(z.object({ category: z.number(), vote: z.number() })),
-  }),
-  setCanVote: z.object({
-    canVote: z.boolean(),
-  }),
-  deleteRoom: z.null(),
-  clearVotes: z.union([
-    z.literal("all"),
+  updateVotes: sn(
     z.object({
-      category: z.number(),
-    }),
-  ]),
-  newTickets: z.array(
-    z.object({
-      id: z.number(),
-      ticketId: z.string(),
-      title: z.string(),
-      url: z.string(),
+      user: z.string(),
+      votes: z.array(
+        z.object({
+          categoryId: z.number(),
+          value: z.number(),
+          id: z.bigint(),
+          ticketId: z.number(),
+          userId: z.string(),
+        }),
+      ),
     }),
   ),
-  deleteTickets: z.array(z.number()),
-  selectTicket: z.object({
-    id: z.number(),
-  }),
-  completeTicket: z.object({
-    id: z.number(),
-    results: z.record(z.number()),
-  }),
+  setCanVote: sn(
+    z.object({
+      canVote: z.boolean(),
+    }),
+  ),
+  deleteRoom: sn(z.null()),
+  clearVotes: sn(
+    z.union([
+      z.literal("all"),
+      z.object({
+        category: z.number(),
+      }),
+    ]),
+  ),
+  newTickets: sn(
+    z.array(
+      z.object({
+        id: z.number(),
+        ticketId: z.string(),
+        title: z.string(),
+        url: z.string(),
+        type: ticketType,
+        selected: z.boolean(),
+        voting: z.boolean(),
+        done: z.boolean(),
+        roomId: z.number(),
+      }),
+    ),
+  ),
+  deleteTickets: sn(z.array(z.number())),
+  selectTicket: sn(
+    z.object({
+      id: z.number(),
+    }),
+  ),
+  completeTicket: sn(
+    z.object({
+      id: z.number(),
+      results: z.array(
+        z.object({
+          id: z.bigint(),
+          ticketId: z.number(),
+          categoryId: z.number(),
+          value: z.number(),
+        }),
+      ),
+    }),
+  ),
 } as const;
 
 export type Event = keyof typeof pusherConfig;
@@ -119,7 +163,11 @@ class TypedPusher {
   }
 
   trigger(input: PusherInput) {
-    return this.innerPusher.trigger(input.channel, input.event, input.data);
+    return this.innerPusher.trigger(
+      input.channel,
+      input.event,
+      superjson.stringify(input.data),
+    );
   }
 }
 

@@ -125,8 +125,8 @@ export const mainRouter = createTRPCRouter({
           id: room.id,
         },
         data: {
-          users:{
-            set: []
+          users: {
+            set: [],
           },
         },
       });
@@ -139,7 +139,9 @@ export const mainRouter = createTRPCRouter({
         await pusher.trigger({
           channel: getChannelName(room.slug),
           event: "deleteRoom",
-          data: null,
+          data: {
+            eventData: null,
+          },
         });
       } catch (e) {
         console.error(e);
@@ -288,7 +290,7 @@ export const mainRouter = createTRPCRouter({
       await pusher.trigger({
         channel: getChannelName(room.slug),
         event: "newTickets",
-        data: tickets,
+        data: { ignoreUser: session.user.id, eventData: tickets },
       });
       return tickets;
     }),
@@ -323,7 +325,10 @@ export const mainRouter = createTRPCRouter({
       await pusher.trigger({
         channel: getChannelName(room.slug),
         event: "deleteTickets",
-        data: input.tickets,
+        data: {
+          eventData: input.tickets,
+          ignoreUser: session.user.id,
+        },
       });
       return room;
     }),
@@ -376,7 +381,10 @@ export const mainRouter = createTRPCRouter({
         channel: getChannelName(ticket.room.slug),
         event: "selectTicket",
         data: {
-          id: ticket.id,
+          ignoreUser: session.user.id,
+          eventData: {
+            id: ticket.id,
+          },
         },
       });
       return ticket;
@@ -444,13 +452,11 @@ export const mainRouter = createTRPCRouter({
         channel: getChannelName(ticket.room.slug),
         event: "updateVotes",
         data: {
-          user: session.user.id,
-          votes: vote.map((v) => {
-            return {
-              vote: v.value,
-              category: v.categoryId,
-            };
-          }),
+          ignoreUser: session.user.id,
+          eventData: {
+            user: session.user.id,
+            votes: vote
+          },
         },
       });
       return vote;
@@ -496,7 +502,10 @@ export const mainRouter = createTRPCRouter({
       await pusher.trigger({
         channel: getChannelName(ticket.room.slug),
         event: "clearVotes",
-        data: input.clear,
+        data: {
+          eventData: input.clear,
+          ignoreUser: session.user.id,
+        },
       });
       return true;
     }),
@@ -539,7 +548,8 @@ export const mainRouter = createTRPCRouter({
         channel: getChannelName(ticket.room.slug),
         event: "setCanVote",
         data: {
-          canVote: input.canVote,
+          eventData: { canVote: input.canVote },
+          ignoreUser: session.user.id,
         },
       });
       return true;
@@ -625,8 +635,11 @@ export const mainRouter = createTRPCRouter({
         channel: getChannelName(ticket.room.slug),
         event: "completeTicket",
         data: {
-          id: ticket.id,
-          results: resultObj,
+          ignoreUser: session.user.id,
+          eventData: {
+            id: ticket.id,
+            results: resultTx,
+          },
         },
       });
       return { ticket, results: resultTx };

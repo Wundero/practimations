@@ -14,6 +14,7 @@ export default function JoinRoomModal(props: {
 
   const [roomSlug, setRoomSlug] = useState("");
   const [slugHasChanged, setSlugHasChanged] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   return (
     <HtmlDialog {...props}>
@@ -44,13 +45,14 @@ export default function JoinRoomModal(props: {
                 { slug: roomSlug },
                 {
                   onSuccess(data) {
+                    setLoading(true);
                     router.push(`/room/${data.slug}`).catch(console.error);
                   },
                 },
               );
             }}
           >
-            {joinMutation.isLoading ? (
+            {joinMutation.isLoading || loading ? (
               <>
                 <span className="loading loading-spinner"></span>Joining...
               </>

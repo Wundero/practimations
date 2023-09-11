@@ -3,7 +3,7 @@ import type {
   GetServerSidePropsContext,
   InferGetServerSidePropsType,
 } from "next";
-import { api, getBaseUrl } from "~/utils/api";
+import { api } from "~/utils/api";
 import { usePusherChannel } from "~/hooks/usePusher";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";

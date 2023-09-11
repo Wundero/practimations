@@ -34,11 +34,11 @@ model Vote {
 
     value Int
 
+    @@unique([userId, ticketId, categoryId])
     @@index([ticketId])
     @@index([categoryId])
     @@index([userId])
     @@index([categoryId, ticketId])
-    @@unique([userId, ticketId, categoryId])
 }
 
 model Result {
@@ -138,7 +138,7 @@ model User {
     image         String?
     accounts      Account[]
     sessions      Session[]
-    currentRoom   Room?     @relation(fields: [currentRoomId], references: [id], name: "UserCurrentRoom")
+    currentRoom   Room?     @relation(fields: [currentRoomId], references: [id], name: "UserCurrentRoom", onDelete: NoAction, onUpdate: NoAction)
     currentRoomId Int?
 
     ownedRooms Room[] @relation("RoomOwner")

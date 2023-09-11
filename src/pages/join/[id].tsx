@@ -22,7 +22,7 @@ export const getServerSideProps: GetServerSideProps<
   if (!session) {
     return {
       redirect: {
-        destination: `/`,
+        destination: `/?cb=${id}`,
         permanent: false,
       },
     };

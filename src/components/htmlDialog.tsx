@@ -34,7 +34,7 @@ export const HtmlDialog = (props: DialogProps) => {
     <dialog className="modal" ref={ref}>
       {props.children}
       <form method="dialog" className="modal-backdrop">
-        <button>close</button>
+        <button className="cursor-default">close</button>
       </form>
     </dialog>
   );

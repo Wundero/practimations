@@ -159,11 +159,12 @@ export default function AddTicketsModal(props: {
         <div className="collapse bg-neutral-focus">
           <input
             type="checkbox"
+            checked
             onChange={(e) => setTicketsExpanded(e.target.checked)}
           />
           <div className="text-bold collapse-title text-lg">
             {tickets.length} Tickets (click to{" "}
-            {ticketsExpanded ? "hide" : "show"})
+            {ticketsExpanded ? "show" : "hide"})
           </div>
           <div className="collapse-content my-2 flex flex-col gap-1">
             {tickets.map((ticket) => {

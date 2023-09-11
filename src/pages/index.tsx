@@ -4,12 +4,13 @@ import { getServerAuthSession } from "~/server/auth";
 import { FaGithub } from "react-icons/fa";
 
 import JoinRoomModal from "~/components/joinRoomModal";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import CreateRoomModal from "~/components/createRoomModal";
 import { api } from "~/utils/api";
 import Link from "next/link";
 import { MdClose } from "react-icons/md";
 import ConfirmModal from "~/components/confirmModal";
+import { useRouter } from "next/router";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getServerAuthSession(ctx);
@@ -110,9 +111,22 @@ function RoomInput() {
 }
 
 function Unauthenticated() {
+  const router = useRouter();
+
+  const callbackUrl = useMemo(() => {
+    if (typeof router.query.cb === "string") {
+      return `/join/${router.query.cb}`;
+    }
+    return undefined;
+  }, [router]);
+
   return (
     <button
       onClick={() => {
+        if (callbackUrl) {
+          signIn("github", { callbackUrl }).catch(console.error);
+          return;
+        }
         signIn("github").catch((e) => {
           console.error(e);
         });

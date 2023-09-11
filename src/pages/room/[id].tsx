@@ -423,6 +423,26 @@ function Room({ id }: RoomProps) {
     return debounce((v: boolean) => setShowCopyMsg(v), 1000);
   }, [setShowCopyMsg]);
 
+  const selectedTicketGeometricAverage = useMemo(() => {
+    if (!selectedTicket || !room) {
+      return 0;
+    }
+    const categoryAverages = room.categories.map((category) => {
+      const votes = selectedTicket?.votes.filter(
+        (vote) => vote.categoryId === category.id,
+      );
+      return (
+        votes.reduce((acc, r) => {
+          return acc + r.value;
+        }, 0) / votes.length
+      );
+    });
+    return Math.pow(
+      categoryAverages.reduce((acc, v) => acc * v, 1),
+      1 / categoryAverages.length,
+    ).toFixed(2);
+  }, [selectedTicket, room]);
+
   if (!room) {
     return <div className="loading loading-spinner loading-lg"></div>;
   }
@@ -464,7 +484,7 @@ function Room({ id }: RoomProps) {
           {room.users.map((user) => {
             return (
               <div
-                className="flex w-fit items-center gap-2 rounded-xl bg-neutral-focus px-2 py-1"
+                className="flex w-fit items-center gap-2 rounded-xl bg-neutral-focus px-2 py-1 text-neutral-content"
                 key={user.id}
               >
                 <UserAvatar
@@ -667,14 +687,11 @@ function Room({ id }: RoomProps) {
                                 setMyVotes((prev) => {
                                   return {
                                     ...prev,
-                                    [category.id]: Math.min(
-                                      Math.max(1, value),
-                                      10,
-                                    ),
+                                    [category.id]: value,
                                   };
                                 });
                               }}
-                              className="input input-bordered text-neutral-content"
+                              className="input input-bordered text-black dark:text-neutral-content"
                               type="number"
                               min="1"
                               max="10"
@@ -740,9 +757,7 @@ function Room({ id }: RoomProps) {
                         </span>
 
                         <span className="font-bold">
-                          {selectedTicket.votes.reduce((acc, r) => {
-                            return acc * r.value;
-                          }, 1)}
+                          {selectedTicketGeometricAverage}
                         </span>
                       </div>
                     </>
@@ -757,7 +772,10 @@ function Room({ id }: RoomProps) {
                         {
                           ticketId: selectedTicket.id,
                           votes: room.categories.map((category) => {
-                            const voteValue = myVotes[category.id] ?? 1;
+                            const voteValue = Math.max(
+                              0,
+                              Math.min(10, myVotes[category.id] ?? 1),
+                            );
                             return {
                               category: category.id,
                               value: voteValue,
@@ -966,9 +984,12 @@ function Room({ id }: RoomProps) {
                       </span>
 
                       <span className="font-bold">
-                        {ticket.results.reduce((acc, r) => {
-                          return acc * r.value;
-                        }, 1)}
+                        {Math.pow(
+                          ticket.results.reduce((acc, r) => {
+                            return acc * r.value;
+                          }, 1),
+                          1 / ticket.results.length,
+                        ).toFixed(2)}
                       </span>
                     </div>
                   </div>

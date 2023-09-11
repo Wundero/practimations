@@ -58,6 +58,12 @@ function RoomInput() {
         onClose={() => setConfirmDialog(null)}
         loading={deleteRoomMutation.isLoading}
         onConfirm={() => {
+          utils.main.getMyRooms.setData(undefined, (prev) => {
+            if (!prev) {
+              return prev;
+            }
+            return prev.filter((room) => room.slug !== confirmDialog!.slug);
+          });
           deleteRoomMutation.mutate(
             { slug: confirmDialog!.slug },
             {

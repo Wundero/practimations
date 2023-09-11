@@ -3,7 +3,7 @@ import type {
   GetServerSidePropsContext,
   InferGetServerSidePropsType,
 } from "next";
-import { api } from "~/utils/api";
+import { api, getBaseUrl } from "~/utils/api";
 import { usePusherChannel } from "~/hooks/usePusher";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
@@ -449,7 +449,9 @@ function Room({ id }: RoomProps) {
           <button
             className="btn btn-circle btn-ghost btn-sm"
             onClick={() => {
-              navigator.clipboard.writeText(room.slug).catch(console.error);
+              navigator.clipboard
+                .writeText(`${getBaseUrl()}/join/${room.slug}`)
+                .catch(console.error);
               setShowCopyMsg(true);
               debouncedSetShowCopyMsg(false);
             }}

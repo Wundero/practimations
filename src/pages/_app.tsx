@@ -3,6 +3,7 @@ import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import { type AppType } from "next/app";
 import { PusherProvider } from "~/hooks/usePusher";
+import Head from "next/head";
 
 import { api } from "~/utils/api";
 
@@ -16,6 +17,11 @@ const MyApp: AppType<{ session: Session | null }> = ({
     <ThemeProvider>
       <SessionProvider session={session}>
         <PusherProvider>
+          <Head>
+            <title>Practimations</title>
+            <meta name="description" content="Estimations for the soul" />
+            <link rel="icon" href="/favicon.ico" />
+          </Head>
           <Component {...pageProps} />
         </PusherProvider>
       </SessionProvider>

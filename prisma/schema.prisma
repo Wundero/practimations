@@ -13,7 +13,7 @@ datasource db {
 
 model Category {
     id     Int    @id @default(autoincrement())
-    name   String @unique
+    name   String
     room   Room   @relation(fields: [roomId], references: [id])
     roomId Int
 
@@ -21,6 +21,7 @@ model Category {
     results Result[]
 
     @@index([roomId])
+    @@unique([roomId, name])
 }
 
 model Vote {
@@ -65,7 +66,7 @@ enum TicketType {
 
 model Ticket {
     id       Int        @id @default(autoincrement())
-    ticketId String     @unique
+    ticketId String
     title    String
     url      String
     type     TicketType @default(TASK)
@@ -81,6 +82,7 @@ model Ticket {
     results Result[]
 
     @@index([roomId])
+    @@unique([roomId, ticketId])
 }
 
 model Room {

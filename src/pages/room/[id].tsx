@@ -870,11 +870,21 @@ function Room({ id }: RoomProps) {
                           },
                           {
                             onSuccess() {
-                              utils.main.getRoom
-                                .invalidate({ slug: id })
-                                .catch((e) => {
-                                  console.error(e);
-                                });
+                              setCanVoteMutation.mutate(
+                                {
+                                  canVote: true,
+                                  ticketId: selectedTicket.id,
+                                },
+                                {
+                                  onSuccess() {
+                                    utils.main.getRoom
+                                      .invalidate({ slug: id })
+                                      .catch((e) => {
+                                        console.error(e);
+                                      });
+                                  },
+                                },
+                              );
                             },
                           },
                         );

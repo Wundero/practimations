@@ -1060,7 +1060,7 @@ function Room({ id }: RoomProps) {
                             </span>
                           </div>
                           {completedTicketShowMore.includes(ticket.id) && (
-                            <div className="flex flex-wrap">
+                            <div className="flex flex-wrap gap-2">
                               {ticket.votes
                                 .filter(
                                   (vote) => vote.categoryId === category.id,

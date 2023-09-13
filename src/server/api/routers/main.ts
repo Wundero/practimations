@@ -256,7 +256,23 @@ export const mainRouter = createTRPCRouter({
           },
         },
       });
-      return room;
+      if (!room) {
+        return room;
+      }
+      return {
+        ...room,
+        tickets: room.tickets.map((t) => {
+          return {
+            ...t,
+            results: t.results.map((r) => {
+              return {
+                ...r,
+                value: r.value.toNumber(),
+              };
+            }),
+          };
+        }),
+      };
     }),
   addTickets: protectedProcedure
     .input(
@@ -485,7 +501,8 @@ export const mainRouter = createTRPCRouter({
           ticketId: input.ticketId,
         },
       });
-      const maxVoteCount = ticket.room.users.length * ticket.room.categories.length;
+      const maxVoteCount =
+        ticket.room.users.length * ticket.room.categories.length;
       if (voteCount === maxVoteCount) {
         await prisma.ticket.update({
           where: {
@@ -497,12 +514,12 @@ export const mainRouter = createTRPCRouter({
         });
         await pusher.trigger({
           channel: getChannelName(ticket.room.slug),
-          event: 'setCanVote',
+          event: "setCanVote",
           data: {
             eventData: {
               canVote: false,
             },
-          }
+          },
         });
       }
       return vote;
@@ -661,7 +678,7 @@ export const mainRouter = createTRPCRouter({
           ticketId: input.ticketId,
         });
       });
-      await prisma.ticket.update({
+      const newTicket = await prisma.ticket.update({
         where: {
           id: input.ticketId,
         },
@@ -684,10 +701,23 @@ export const mainRouter = createTRPCRouter({
           ignoreUser: session.user.id,
           eventData: {
             id: ticket.id,
-            results: resultTx,
+            results: resultTx.map((r) => {
+              return {
+                ...r,
+                value: r.value.toNumber(),
+              };
+            }),
           },
         },
       });
-      return { ticket, results: resultTx };
+      return {
+        newTicket,
+        results: resultTx.map((r) => {
+          return {
+            ...r,
+            value: r.value.toNumber(),
+          };
+        }),
+      };
     }),
 });

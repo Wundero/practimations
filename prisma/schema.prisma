@@ -50,7 +50,7 @@ model Result {
     category   Category @relation(fields: [categoryId], references: [id])
     categoryId Int
 
-    value Int
+    value Decimal
 
     @@index([ticketId])
     @@index([categoryId])

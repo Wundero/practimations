@@ -478,7 +478,7 @@ function Room({ id }: RoomProps) {
     return Math.pow(
       categoryAverages.reduce((acc, v) => acc * v, 1),
       1 / (categoryAverages.length - 1),
-    ).toFixed(2);
+    ).toFixed(1);
   }, [selectedTicket, room]);
 
   if (!room) {
@@ -1025,7 +1025,7 @@ function Room({ id }: RoomProps) {
                           </span>
 
                           <span className="font-semibold">
-                            {result?.value ?? 0}
+                            {result?.value.toFixed(1) ?? 0}
                           </span>
                         </div>
                       );
@@ -1062,7 +1062,7 @@ function Room({ id }: RoomProps) {
                             return acc * r.value;
                           }, 1),
                           1 / (ticket.results.length - 1),
-                        ).toFixed(2)}
+                        ).toFixed(1)}
                       </span>
                     </div>
                   </div>

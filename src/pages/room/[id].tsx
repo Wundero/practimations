@@ -713,7 +713,22 @@ function Room({ id }: RoomProps) {
                           {category.name}
                         </span>
                         {selectedTicket.voting ? (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-4">
+                            {!!selectedTicket.votes.find(
+                              (v) =>
+                                v.userId === session.data?.user.id &&
+                                v.categoryId === category.id,
+                            ) && (
+                              <span className="font-semibold">
+                                {
+                                  selectedTicket.votes.find(
+                                    (v) =>
+                                      v.userId === session.data?.user.id &&
+                                      v.categoryId === category.id,
+                                  )!.value
+                                }
+                              </span>
+                            )}
                             <input
                               value={myVotes[category.id] ?? 1}
                               onChange={(e) => {

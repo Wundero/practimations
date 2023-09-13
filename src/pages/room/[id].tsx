@@ -757,7 +757,12 @@ function Room({ id }: RoomProps) {
                                 return (
                                   <div
                                     key={vote.id.toString()}
-                                    className="flex items-center gap-1"
+                                    className="tooltip flex items-center gap-1"
+                                    data-tip={
+                                      room.users.find(
+                                        (user) => user.id === vote.userId,
+                                      )!.name
+                                    }
                                   >
                                     <UserAvatar
                                       user={

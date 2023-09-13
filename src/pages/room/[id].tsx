@@ -18,6 +18,7 @@ import {
   MdCheck,
   MdContentCopy,
   MdHome,
+  MdHourglassBottom,
   MdOutlineClose,
 } from "react-icons/md";
 import { serverSideHelpers } from "~/server/api/ssr";
@@ -540,6 +541,11 @@ function Room({ id }: RoomProps) {
                 {!!selectedTicket &&
                   selectedTicket.votes.filter((vote) => vote.userId === user.id)
                     .length > 0 && <MdCheck className="text-success" />}
+                {!!selectedTicket &&
+                  selectedTicket.votes.filter((vote) => vote.userId === user.id)
+                    .length === 0 && (
+                    <MdHourglassBottom className="text-neutral-content" />
+                  )}
               </div>
             );
           })}

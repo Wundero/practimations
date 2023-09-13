@@ -481,6 +481,10 @@ function Room({ id }: RoomProps) {
     ).toFixed(1);
   }, [selectedTicket, room]);
 
+  const [completedTicketShowMore, setCompletedTicketShowMore] = useState<
+    number[]
+  >([]);
+
   if (!room) {
     return <div className="loading loading-spinner loading-lg"></div>;
   }
@@ -1003,13 +1007,40 @@ function Room({ id }: RoomProps) {
                     },
                   )}
                 >
-                  <a
-                    href={ticket.url}
-                    target="_blank"
-                    className="font-bold underline"
-                  >
-                    {ticket.title}
-                  </a>
+                  <div className="flex gap-3">
+                    <a
+                      href={ticket.url}
+                      target="_blank"
+                      className="font-bold underline"
+                    >
+                      {ticket.title}
+                    </a>
+                    <div className="tooltip" data-tip="More info">
+                      <button
+                        className="btn btn-circle btn-ghost btn-xs"
+                        onClick={() => {
+                          setCompletedTicketShowMore((old) => {
+                            if (old.includes(ticket.id)) {
+                              return old.filter(
+                                (ticketId) => ticketId !== ticket.id,
+                              );
+                            } else {
+                              return [...old, ticket.id];
+                            }
+                          });
+                        }}
+                      >
+                        <MdAdd
+                          size={16}
+                          className={cn("transition-transform", {
+                            "rotate-45": completedTicketShowMore.includes(
+                              ticket.id,
+                            ),
+                          })}
+                        />
+                      </button>
+                    </div>
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {room.categories.map((category) => {
                       const result = ticket.results.find(
@@ -1018,15 +1049,51 @@ function Room({ id }: RoomProps) {
                       return (
                         <div
                           key={category.id}
-                          className="flex items-center justify-between gap-2 rounded-md bg-neutral-focus/25 p-2"
+                          className=" flex flex-col gap-2 rounded-md bg-neutral-focus/25 p-2"
                         >
-                          <span className="rounded-full bg-neutral-focus px-2 capitalize text-neutral-content">
-                            {category.name}
-                          </span>
-
-                          <span className="font-semibold">
-                            {result?.value.toFixed(1) ?? 0}
-                          </span>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="rounded-full bg-neutral-focus px-2 capitalize text-neutral-content">
+                              {category.name}
+                            </span>
+                            <span className="font-semibold">
+                              {result?.value.toFixed(1) ?? 0}
+                            </span>
+                          </div>
+                          {completedTicketShowMore.includes(ticket.id) && (
+                            <div className="flex flex-wrap">
+                              {ticket.votes
+                                .filter(
+                                  (vote) => vote.categoryId === category.id,
+                                )
+                                .map((vote) => {
+                                  return (
+                                    <div
+                                      key={vote.id.toString()}
+                                      className="tooltip flex items-center gap-1"
+                                      data-tip={
+                                        room.users.find(
+                                          (user) => user.id === vote.userId,
+                                        )!.name
+                                      }
+                                    >
+                                      <UserAvatar
+                                        user={
+                                          room.users.find(
+                                            (user) => user.id === vote.userId,
+                                          )!
+                                        }
+                                        presence={pusherMembers.includes(
+                                          vote.userId,
+                                        )}
+                                      />
+                                      <span className="font-bold">
+                                        {vote.value}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                            </div>
+                          )}
                         </div>
                       );
                     })}

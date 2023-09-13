@@ -25,6 +25,7 @@ import { serverSideHelpers } from "~/server/api/ssr";
 import Link from "next/link";
 import type { Event, Data } from "~/server/integrations/pusher";
 import superjson from "superjson";
+import algorithms from "~/utils/math";
 
 type User = {
   id: string;
@@ -460,26 +461,6 @@ function Room({ id }: RoomProps) {
     return debounce((v: boolean) => setShowCopyMsg(v), 1000);
   }, [setShowCopyMsg]);
 
-  const selectedTicketGeometricAverage = useMemo(() => {
-    if (!selectedTicket || !room) {
-      return 0;
-    }
-    const categoryAverages = room.categories.map((category) => {
-      const votes = selectedTicket?.votes.filter(
-        (vote) => vote.categoryId === category.id,
-      );
-      return (
-        votes.reduce((acc, r) => {
-          return acc + r.value;
-        }, 0) / votes.length
-      );
-    });
-    return Math.pow(
-      categoryAverages.reduce((acc, v) => acc * v, 1),
-      1 / (categoryAverages.length - 1),
-    ).toFixed(1);
-  }, [selectedTicket, room]);
-
   const [completedTicketShowMore, setCompletedTicketShowMore] = useState<
     number[]
   >([]);
@@ -796,36 +777,22 @@ function Room({ id }: RoomProps) {
                   })}
                   {!selectedTicket.voting && (
                     <>
-                      <div
-                        key={"total"}
-                        className="tooltip flex items-center justify-between gap-2 rounded-md bg-neutral-focus/25 p-2"
-                        data-tip="Average"
-                      >
-                        <span className="rounded-full bg-neutral-focus px-2 text-lg font-bold capitalize text-neutral-content">
-                          Average
-                        </span>
+                      {Object.entries(algorithms).map(([algo, fn]) => {
+                        return (
+                          <div
+                            key={algo}
+                            className="flex items-center justify-between gap-2 rounded-md bg-neutral-focus/25 p-2"
+                          >
+                            <span className="rounded-full bg-neutral-focus px-2 text-lg font-bold capitalize text-neutral-content">
+                              {algo}
+                            </span>
 
-                        <span className="font-bold">
-                          {(
-                            selectedTicket.votes.reduce((acc, r) => {
-                              return acc + r.value;
-                            }, 0) / (selectedTicket.votes.length || 1)
-                          ).toFixed(1)}
-                        </span>
-                      </div>
-                      <div
-                        key={"geom"}
-                        className="tooltip flex items-center justify-between gap-2 rounded-md bg-neutral-focus/25 p-2"
-                        data-tip="Geometric Average"
-                      >
-                        <span className="rounded-full bg-neutral-focus px-2 text-lg font-bold capitalize text-neutral-content">
-                          Geometric
-                        </span>
-
-                        <span className="font-bold">
-                          {selectedTicketGeometricAverage}
-                        </span>
-                      </div>
+                            <span className="font-bold">
+                              {fn.votes(selectedTicket).toFixed(1)}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </>
                   )}
                 </div>
@@ -1096,41 +1063,22 @@ function Room({ id }: RoomProps) {
                         </div>
                       );
                     })}
-                    <div
-                      key={"total"}
-                      className="tooltip tooltip-bottom flex items-center justify-between gap-2 rounded-md bg-neutral-focus/25 p-2"
-                      data-tip="Average"
-                    >
-                      <span className="rounded-full bg-neutral-focus px-2 text-lg font-bold capitalize text-neutral-content">
-                        Average
-                      </span>
+                    {Object.entries(algorithms).map(([algo, fn]) => {
+                      return (
+                        <div
+                          key={algo}
+                          className="flex items-center justify-between gap-2 rounded-md bg-neutral-focus/25 p-2"
+                        >
+                          <span className="rounded-full bg-neutral-focus px-2 text-lg font-bold capitalize text-neutral-content">
+                            {algo}
+                          </span>
 
-                      <span className="font-bold">
-                        {(
-                          ticket.results.reduce((acc, r) => {
-                            return acc + r.value;
-                          }, 0) / ticket.results.length
-                        ).toFixed(1)}
-                      </span>
-                    </div>
-                    <div
-                      key={"geom"}
-                      className="tooltip tooltip-bottom flex items-center justify-between gap-2 rounded-md bg-neutral-focus/25 p-2"
-                      data-tip="Geometric Average"
-                    >
-                      <span className="rounded-full bg-neutral-focus px-2 text-lg font-bold capitalize text-neutral-content">
-                        Geometric
-                      </span>
-
-                      <span className="font-bold">
-                        {Math.pow(
-                          ticket.results.reduce((acc, r) => {
-                            return acc * r.value;
-                          }, 1),
-                          1 / (ticket.results.length - 1),
-                        ).toFixed(1)}
-                      </span>
-                    </div>
+                          <span className="font-bold">
+                            {fn.results(ticket).toFixed(1)}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );

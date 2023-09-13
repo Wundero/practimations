@@ -48,7 +48,7 @@ export const getServerSideProps: GetServerSideProps<
       id: session.user.id,
     },
     data: {
-      currentRoom: {
+      allRooms: {
         connect: {
           id: room.id,
         },

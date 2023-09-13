@@ -20,8 +20,8 @@ model Category {
     votes   Vote[]
     results Result[]
 
-    @@index([roomId])
     @@unique([roomId, name])
+    @@index([roomId])
 }
 
 model Vote {
@@ -81,8 +81,8 @@ model Ticket {
     votes   Vote[]
     results Result[]
 
-    @@index([roomId])
     @@unique([roomId, ticketId])
+    @@index([roomId])
 }
 
 model Room {
@@ -140,13 +140,10 @@ model User {
     image         String?
     accounts      Account[]
     sessions      Session[]
-    currentRoom   Room?     @relation(fields: [currentRoomId], references: [id], name: "UserCurrentRoom", onDelete: NoAction, onUpdate: NoAction)
-    currentRoomId Int?
 
     ownedRooms Room[] @relation("RoomOwner")
+    allRooms   Room[] @relation("UserCurrentRoom")
     Vote       Vote[]
-
-    @@index([currentRoomId])
 }
 
 model VerificationToken {

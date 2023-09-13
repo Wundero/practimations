@@ -32,7 +32,6 @@ type User = {
   email: string | null;
   emailVerified: Date | null;
   image: string | null;
-  currentRoomId: number | null;
 };
 
 type Ticket = {

@@ -433,7 +433,12 @@ export const mainRouter = createTRPCRouter({
           },
         },
         include: {
-          room: true,
+          room: {
+            include: {
+              categories: true,
+              users: true,
+            },
+          },
         },
       });
       if (!ticket) {
@@ -475,6 +480,31 @@ export const mainRouter = createTRPCRouter({
           },
         },
       });
+      const voteCount = await prisma.vote.count({
+        where: {
+          ticketId: input.ticketId,
+        },
+      });
+      const maxVoteCount = ticket.room.users.length * ticket.room.categories.length;
+      if (voteCount === maxVoteCount) {
+        await prisma.ticket.update({
+          where: {
+            id: input.ticketId,
+          },
+          data: {
+            voting: false,
+          },
+        });
+        await pusher.trigger({
+          channel: getChannelName(ticket.room.slug),
+          event: 'setCanVote',
+          data: {
+            eventData: {
+              canVote: false,
+            },
+          }
+        });
+      }
       return vote;
     }),
   clearVotes: protectedProcedure

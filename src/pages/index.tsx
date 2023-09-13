@@ -88,7 +88,7 @@ function RoomInput() {
         ) : (
           myRooms.data?.map((room) => (
             <div className="flex items-center gap-2" key={room.slug}>
-              <Link href={`/room/${room.slug}`} className="link">
+              <Link href={`/join/${room.slug}`} className="link">
                 {room.name}
               </Link>
               <button

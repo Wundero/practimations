@@ -84,6 +84,7 @@ export default function CreateRoomModal(props: {
   const [currentValue, setCurrentValue] = useState("");
   const [coffee, setCoffee] = useState(true);
   const [question, setQuestion] = useState(true);
+  const [maxMembers, setMaxMembers] = useState(100);
 
   const [loading, setLoading] = useState(false);
 
@@ -100,7 +101,8 @@ export default function CreateRoomModal(props: {
           placeholder="Room Name"
           className="input input-bordered w-full"
         />
-        <div className="flex flex-col gap-4 pt-4">
+        <div className="p-2" />
+        <div className="flex flex-col gap-4 border border-accent p-2 rounded-md">
           <div className="flex flex-wrap gap-2">
             {categories.map((category, i) => {
               return (
@@ -146,9 +148,25 @@ export default function CreateRoomModal(props: {
             className="input input-bordered w-full"
           />
         </div>
+        <div className="pt-4">
+          <label className="label">
+            <span className="label-text">Max users</span>
+            <input
+              type="number"
+              value={maxMembers}
+              min={2}
+              max={100}
+              onChange={(e) => {
+                setMaxMembers(parseInt(e.target.value));
+              }}
+              placeholder="Min"
+              className="input input-bordered w-full"
+            />
+          </label>
+        </div>
         <div className="flex flex-col gap-4 pt-4">
           <label className="label cursor-pointer">
-            <span className="label-text">Value Range:</span>
+            <span className="label-text">Range:</span>
             <input
               type="checkbox"
               checked={valueRange}
@@ -159,7 +177,7 @@ export default function CreateRoomModal(props: {
             />
           </label>
           {valueRange ? (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 border border-accent p-2 rounded-md">
               <input
                 type="number"
                 value={min}
@@ -188,7 +206,7 @@ export default function CreateRoomModal(props: {
               />
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 border border-accent p-2 rounded-md">
               <div className="flex flex-wrap gap-2">
                 {valuesSorted.map((value) => {
                   return (
@@ -265,7 +283,8 @@ export default function CreateRoomModal(props: {
               </div>
             </div>
           )}
-          <div className="flex justify-around gap-2">
+          <div className="flex justify-around gap-2 items-center">
+            Special Values:
             <label className="label cursor-pointer gap-2">
               <span className="label-text">
                 <BiCoffee />
@@ -318,6 +337,7 @@ export default function CreateRoomModal(props: {
                     coffee,
                     question,
                   },
+                  maxMembers: Math.min(100, Math.max(2, maxMembers)),
                   inputs: valueRange
                     ? {
                         type: "range",

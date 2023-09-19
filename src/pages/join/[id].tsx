@@ -32,9 +32,30 @@ export const getServerSideProps: GetServerSideProps<
     where: {
       slug: id,
     },
+    include: {
+      users: true,
+    },
   });
 
   if (!room) {
+    return {
+      redirect: {
+        destination: `/`,
+        permanent: false,
+      },
+    };
+  }
+
+  if (room.users.some((u) => u.id === session.user.id)) {
+    return {
+      redirect: {
+        destination: `/room/${room.slug}`,
+        permanent: true,
+      },
+    };
+  }
+
+  if (room.users.length === room.maxMembers) {
     return {
       redirect: {
         destination: `/`,

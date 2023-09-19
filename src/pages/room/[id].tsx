@@ -504,7 +504,9 @@ function Room({ id }: RoomProps) {
       </h1>
       <div className="flex flex-wrap justify-around gap-2 pt-2">
         <div className="flex h-fit w-fit flex-col gap-2 rounded-xl border border-accent p-4">
-          <span className="text-center text-lg font-bold">Users</span>
+          <span className="text-center text-lg font-bold">
+            Users ({room.users.length}/{room.maxMembers})
+          </span>
           {room.users.map((user) => {
             return (
               <div

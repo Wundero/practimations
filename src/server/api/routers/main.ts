@@ -42,6 +42,7 @@ export const mainRouter = createTRPCRouter({
       z.object({
         name: z.string(),
         categories: z.array(z.string()),
+        maxMembers: z.number().min(2).max(100).default(100),
         inputs: z.discriminatedUnion("type", [
           z.object({
             type: z.literal("range"),
@@ -72,6 +73,7 @@ export const mainRouter = createTRPCRouter({
       const room = await prisma.room.create({
         data: {
           name: input.name,
+          maxMembers: input.maxMembers,
           enableCoffee: input.specialInputs.coffee ?? true,
           enableQuestion: input.specialInputs.question ?? true,
           categories: {
@@ -250,6 +252,12 @@ export const mainRouter = createTRPCRouter({
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "User not found",
+        });
+      }
+      if (room.users.length === room.maxMembers) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Room is full",
         });
       }
       await prisma.user.update({

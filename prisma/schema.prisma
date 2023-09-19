@@ -116,6 +116,8 @@ model Room {
     enableQuestion Boolean          @default(true)
     enableCoffee   Boolean          @default(true)
 
+    maxMembers Int @default(100)
+
     @@index([ownerId])
 }
 

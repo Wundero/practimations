@@ -1016,7 +1016,10 @@ function Room({ id }: RoomProps) {
                             ) : (
                               <div className="flex max-w-[16rem] flex-wrap gap-2">
                                 {room.values.map((v) => {
-                                  console.log(v.value, Object.getPrototypeOf(v.value));
+                                  console.log(v);
+                                  if (typeof v === "string") {
+                                    return;
+                                  }
                                   return (
                                     <button
                                       key={v.id}

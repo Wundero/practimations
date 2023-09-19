@@ -26,6 +26,8 @@ import Link from "next/link";
 import type { Event, Data } from "~/server/integrations/pusher";
 import superjson from "superjson";
 import algorithms from "~/utils/math";
+import { BiCoffee } from "react-icons/bi";
+import Decimal from "decimal.js";
 
 type User = {
   id: string;
@@ -481,7 +483,7 @@ function Room({ id }: RoomProps) {
       <h1 className="flex items-center justify-center gap-2 p-4 text-center text-3xl font-extrabold">
         {room.name}
         <div
-          className={cn("", {
+          className={cn({
             "tooltip tooltip-bottom tooltip-open": showCopyMsg,
           })}
           data-tip="Copied!"
@@ -638,7 +640,17 @@ function Room({ id }: RoomProps) {
                         setMyVotes(
                           room.categories.reduce(
                             (acc, category) => {
-                              acc[category.id] = 1;
+                              if (room.valueRange) {
+                                acc[category.id] = room.values
+                                  .find((v) => v.display === "min")!
+                                  .value.toNumber();
+                              } else {
+                                acc[category.id] = room.values
+                                  .sort((a, b) =>
+                                    a.value.comparedTo(b.value),
+                                  )[0]!
+                                  .value.toNumber();
+                              }
                               return acc;
                             },
                             {} as Record<number, number>,
@@ -703,41 +715,230 @@ function Room({ id }: RoomProps) {
                           {category.name}
                         </span>
                         {selectedTicket.voting ? (
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center justify-end gap-4">
                             {!!selectedTicket.votes.find(
                               (v) =>
                                 v.userId === session.data?.user.id &&
                                 v.categoryId === category.id,
                             ) && (
                               <span className="font-semibold">
-                                {selectedTicket.votes
-                                  .find(
+                                {(() => {
+                                  const myVote = selectedTicket.votes.find(
                                     (v) =>
                                       v.userId === session.data?.user.id &&
                                       v.categoryId === category.id,
-                                  )!
-                                  .value.toFixed(1)}
+                                  )!;
+                                  if (myVote.value.isNegative()) {
+                                    if (myVote.value.eq(-1)) {
+                                      return "?";
+                                    } else {
+                                      return <BiCoffee />;
+                                    }
+                                  }
+                                  if (room.valueRange) {
+                                    return myVote.value.toFixed(1);
+                                  }
+                                  const disp = room.values.find((d) => {
+                                    return d.value.eq(myVote.value);
+                                  });
+                                  return (
+                                    disp?.display ?? myVote.value.toFixed(1)
+                                  );
+                                })()}
                               </span>
                             )}
-                            <input
-                              value={myVotes[category.id] ?? 1}
-                              onChange={(e) => {
-                                const value = parseInt(e.target.value);
-                                if (isNaN(value)) {
-                                  return;
-                                }
-                                setMyVotes((prev) => {
-                                  return {
-                                    ...prev,
-                                    [category.id]: value,
-                                  };
-                                });
-                              }}
-                              className="input input-bordered text-black dark:text-neutral-content"
-                              type="number"
-                              min="1"
-                              max="10"
-                            />
+                            {room.valueRange ? (
+                              <div className="flex items-center gap-2">
+                                {room.enableQuestion && (
+                                  <button
+                                    key={"?"}
+                                    className={cn("btn btn-sm", {
+                                      "btn-primary":
+                                        myVotes[category.id] === -1,
+                                      "btn-secondary":
+                                        selectedTicket.votes.some((vote) => {
+                                          return (
+                                            vote.userId ===
+                                              session.data?.user.id &&
+                                            vote.categoryId === category.id &&
+                                            vote.value.eq(-1)
+                                          );
+                                        }) && myVotes[category.id] !== -1,
+                                    })}
+                                    onClick={() => {
+                                      setMyVotes((prev) => {
+                                        return {
+                                          ...prev,
+                                          [category.id]: -1,
+                                        };
+                                      });
+                                    }}
+                                  >
+                                    ?
+                                  </button>
+                                )}
+                                {room.enableCoffee && (
+                                  <button
+                                    key={"coffee"}
+                                    className={cn("btn btn-sm", {
+                                      "btn-primary":
+                                        myVotes[category.id] === -2,
+                                      "btn-secondary":
+                                        selectedTicket.votes.some((vote) => {
+                                          return (
+                                            vote.userId ===
+                                              session.data?.user.id &&
+                                            vote.categoryId === category.id &&
+                                            vote.value.eq(-2)
+                                          );
+                                        }) && myVotes[category.id] !== -2,
+                                    })}
+                                    onClick={() => {
+                                      setMyVotes((prev) => {
+                                        return {
+                                          ...prev,
+                                          [category.id]: -2,
+                                        };
+                                      });
+                                    }}
+                                  >
+                                    <BiCoffee />
+                                  </button>
+                                )}
+                                <input
+                                  value={(() => {
+                                    const out =
+                                      myVotes[category.id] ??
+                                      room.values
+                                        .find((v) => v.display === "min")!
+                                        .value.toNumber();
+                                    if (out < 0) {
+                                      return "";
+                                    } else {
+                                      return out;
+                                    }
+                                  })()}
+                                  onChange={(e) => {
+                                    const value = parseInt(e.target.value);
+                                    if (isNaN(value)) {
+                                      return;
+                                    }
+                                    setMyVotes((prev) => {
+                                      return {
+                                        ...prev,
+                                        [category.id]: value,
+                                      };
+                                    });
+                                  }}
+                                  className="input input-bordered text-black dark:text-neutral-content"
+                                  type="number"
+                                  min={room.values
+                                    .find((v) => v.display === "min")!
+                                    .value.toNumber()}
+                                  max={room.values
+                                    .find((v) => v.display === "max")!
+                                    .value.toNumber()}
+                                />
+                              </div>
+                            ) : (
+                              <div className="flex max-w-[16rem] flex-wrap gap-2">
+                                {room.values.map((v) => {
+                                  return (
+                                    <button
+                                      key={v.id}
+                                      className={cn("btn btn-sm", {
+                                        "btn-primary": v.value.eq(
+                                          myVotes[category.id] ?? -3,
+                                        ),
+                                        "btn-secondary":
+                                          v.value.eq(
+                                            selectedTicket.votes.find(
+                                              (vote) => {
+                                                return (
+                                                  vote.userId ===
+                                                    session.data?.user.id &&
+                                                  vote.categoryId ===
+                                                    category.id
+                                                );
+                                              },
+                                            )?.value ?? -3,
+                                          ) &&
+                                          !v.value.eq(
+                                            myVotes[category.id] ?? -3,
+                                          ),
+                                      })}
+                                      onClick={() => {
+                                        setMyVotes((prev) => {
+                                          return {
+                                            ...prev,
+                                            [category.id]: v.value.toNumber(),
+                                          };
+                                        });
+                                      }}
+                                    >
+                                      {v.display}
+                                    </button>
+                                  );
+                                })}
+
+                                {room.enableQuestion && (
+                                  <button
+                                    key={"?"}
+                                    className={cn("btn btn-sm", {
+                                      "btn-primary":
+                                        myVotes[category.id] === -1,
+                                      "btn-secondary":
+                                        selectedTicket.votes.some((vote) => {
+                                          return (
+                                            vote.userId ===
+                                              session.data?.user.id &&
+                                            vote.categoryId === category.id &&
+                                            vote.value.eq(-1)
+                                          );
+                                        }) && myVotes[category.id] !== -1,
+                                    })}
+                                    onClick={() => {
+                                      setMyVotes((prev) => {
+                                        return {
+                                          ...prev,
+                                          [category.id]: -1,
+                                        };
+                                      });
+                                    }}
+                                  >
+                                    ?
+                                  </button>
+                                )}
+                                {room.enableCoffee && (
+                                  <button
+                                    key={"coffee"}
+                                    className={cn("btn btn-sm", {
+                                      "btn-primary":
+                                        myVotes[category.id] === -2,
+                                      "btn-secondary":
+                                        selectedTicket.votes.some((vote) => {
+                                          return (
+                                            vote.userId ===
+                                              session.data?.user.id &&
+                                            vote.categoryId === category.id &&
+                                            vote.value.eq(-2)
+                                          );
+                                        }) && myVotes[category.id] !== -2,
+                                    })}
+                                    onClick={() => {
+                                      setMyVotes((prev) => {
+                                        return {
+                                          ...prev,
+                                          [category.id]: -2,
+                                        };
+                                      });
+                                    }}
+                                  >
+                                    <BiCoffee />
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div className="flex flex-wrap gap-2">
@@ -765,7 +966,24 @@ function Room({ id }: RoomProps) {
                                       )}
                                     />
                                     <span className="font-bold">
-                                      {vote.value.toFixed(1)}
+                                      {(() => {
+                                        if (vote.value.isNegative()) {
+                                          if (vote.value.eq(-1)) {
+                                            return "?";
+                                          } else {
+                                            return <BiCoffee />;
+                                          }
+                                        }
+                                        if (room.valueRange) {
+                                          return vote.value.toFixed(1);
+                                        }
+                                        const disp = room.values.find((d) => {
+                                          return d.value.eq(vote.value);
+                                        });
+                                        return (
+                                          disp?.display ?? vote.value.toFixed(1)
+                                        );
+                                      })()}
                                     </span>
                                   </div>
                                 );
@@ -775,26 +993,57 @@ function Room({ id }: RoomProps) {
                       </div>
                     );
                   })}
-                  {!selectedTicket.voting && (
-                    <>
-                      {Object.entries(algorithms).map(([algo, fn]) => {
-                        return (
-                          <div
-                            key={algo}
-                            className="flex items-center justify-between gap-2 rounded-md bg-neutral-focus/25 p-2"
-                          >
-                            <span className="rounded-full bg-neutral-focus px-2 text-lg font-bold capitalize text-neutral-content">
-                              {algo}
-                            </span>
+                  {!selectedTicket.voting &&
+                    !selectedTicket.votes.some((v) => {
+                      return v.value.isNegative();
+                    }) && (
+                      <>
+                        {Object.entries(algorithms).map(([algo, fn]) => {
+                          const value = fn.votes(selectedTicket);
+                          let nearest;
+                          if (room.valueRange) {
+                            nearest = value.toFixed(1);
+                          } else {
+                            let argmin = -1;
+                            let argdel = new Decimal(0);
+                            for (let i = 0; i < room.values.length; i++) {
+                              const v = room.values[i]!.value;
+                              if (argmin === -1) {
+                                argmin = i;
+                                argdel = v.sub(value).abs();
+                              } else if (
+                                argdel.greaterThan(v.sub(value).abs())
+                              ) {
+                                argmin = i;
+                                argdel = v.sub(value).abs();
+                              }
+                            }
+                            nearest =
+                              room.values[argmin]?.display ?? value.toFixed(1);
+                          }
+                          return (
+                            <div
+                              key={algo}
+                              className="flex items-center justify-between gap-2 rounded-md bg-neutral-focus/25 p-2"
+                            >
+                              <span className="rounded-full bg-neutral-focus px-2 text-lg font-bold capitalize text-neutral-content">
+                                {algo}
+                              </span>
 
-                            <span className="font-bold">
-                              {fn.votes(selectedTicket).toFixed(1)}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </>
-                  )}
+                              {room.valueRange ? (
+                                <span className="font-bold">
+                                  {value.toFixed(1)}
+                                </span>
+                              ) : (
+                                <span className="font-bold">
+                                  {nearest} ({value.toFixed(1)})
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </>
+                    )}
                 </div>
                 <div className="flex justify-center gap-2 rounded-md bg-neutral p-2">
                   <button
@@ -916,7 +1165,10 @@ function Room({ id }: RoomProps) {
                       className="btn"
                       disabled={
                         selectedTicket.votes.length === 0 ||
-                        selectedTicket.voting
+                        selectedTicket.voting ||
+                        selectedTicket.votes.some((v) => {
+                          return v.value.isNegative();
+                        })
                       }
                       onClick={() => {
                         completeTicketMutation.mutate(
@@ -1009,6 +1261,9 @@ function Room({ id }: RoomProps) {
                       const result = ticket.results.find(
                         (result) => result.categoryId === category.id,
                       );
+                      if (!result) {
+                        return null;
+                      }
                       return (
                         <div
                           key={category.id}
@@ -1019,7 +1274,22 @@ function Room({ id }: RoomProps) {
                               {category.name}
                             </span>
                             <span className="font-semibold">
-                              {result?.value.toFixed(1) ?? 0}
+                              {(() => {
+                                if (result.value.isNegative()) {
+                                  if (result.value.eq(-1)) {
+                                    return "?";
+                                  } else {
+                                    return <BiCoffee />;
+                                  }
+                                }
+                                if (room.valueRange) {
+                                  return result.value.toFixed(1);
+                                }
+                                const disp = room.values.find((d) => {
+                                  return d.value.eq(result.value);
+                                });
+                                return disp?.display ?? result.value.toFixed(1);
+                              })()}
                             </span>
                           </div>
                           {completedTicketShowMore.includes(ticket.id) && (
@@ -1050,7 +1320,25 @@ function Room({ id }: RoomProps) {
                                         )}
                                       />
                                       <span className="font-bold">
-                                        {vote.value.toFixed(1)}
+                                        {(() => {
+                                          if (vote.value.isNegative()) {
+                                            if (vote.value.eq(-1)) {
+                                              return "?";
+                                            } else {
+                                              return <BiCoffee />;
+                                            }
+                                          }
+                                          if (room.valueRange) {
+                                            return vote.value.toFixed(1);
+                                          }
+                                          const disp = room.values.find((d) => {
+                                            return d.value.eq(vote.value);
+                                          });
+                                          return (
+                                            disp?.display ??
+                                            vote.value.toFixed(1)
+                                          );
+                                        })()}
                                       </span>
                                     </div>
                                   );
@@ -1061,6 +1349,26 @@ function Room({ id }: RoomProps) {
                       );
                     })}
                     {Object.entries(algorithms).map(([algo, fn]) => {
+                      const value = fn.results(ticket);
+                      let nearest;
+                      if (room.valueRange) {
+                        nearest = value.toFixed(1);
+                      } else {
+                        let argmin = -1;
+                        let argdel = new Decimal(0);
+                        for (let i = 0; i < room.values.length; i++) {
+                          const v = room.values[i]!.value;
+                          if (argmin === -1) {
+                            argmin = i;
+                            argdel = v.sub(value).abs();
+                          } else if (argdel.greaterThan(v.sub(value).abs())) {
+                            argmin = i;
+                            argdel = v.sub(value).abs();
+                          }
+                        }
+                        nearest =
+                          room.values[argmin]?.display ?? value.toFixed(1);
+                      }
                       return (
                         <div
                           key={algo}
@@ -1070,9 +1378,15 @@ function Room({ id }: RoomProps) {
                             {algo}
                           </span>
 
-                          <span className="font-bold">
-                            {fn.results(ticket).toFixed(1)}
-                          </span>
+                          {room.valueRange ? (
+                            <span className="font-bold">
+                              {value.toFixed(1)}
+                            </span>
+                          ) : (
+                            <span className="font-bold">
+                              {nearest} ({value.toFixed(1)})
+                            </span>
+                          )}
                         </div>
                       );
                     })}

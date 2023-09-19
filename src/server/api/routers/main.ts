@@ -42,6 +42,29 @@ export const mainRouter = createTRPCRouter({
       z.object({
         name: z.string(),
         categories: z.array(z.string()),
+        inputs: z.discriminatedUnion("type", [
+          z.object({
+            type: z.literal("range"),
+            min: z.number().min(0).max(99),
+            max: z.number().max(100).min(1),
+          }),
+          z.object({
+            type: z.literal("list"),
+            values: z
+              .array(
+                z.object({
+                  value: z.number().min(0).max(100),
+                  label: z.string(),
+                }),
+              )
+              .min(1)
+              .max(15),
+          }),
+        ]),
+        specialInputs: z.object({
+          coffee: z.boolean().nullable(),
+          question: z.boolean().nullable(),
+        }),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -49,6 +72,8 @@ export const mainRouter = createTRPCRouter({
       const room = await prisma.room.create({
         data: {
           name: input.name,
+          enableCoffee: input.specialInputs.coffee ?? true,
+          enableQuestion: input.specialInputs.question ?? true,
           categories: {
             createMany: {
               data: input.categories.map((category) => ({
@@ -56,6 +81,33 @@ export const mainRouter = createTRPCRouter({
               })),
             },
           },
+          valueRange: input.inputs.type === "range",
+          values:
+            input.inputs.type === "range"
+              ? {
+                  createMany: {
+                    data: [
+                      {
+                        display: "min",
+                        value: input.inputs.min,
+                      },
+                      {
+                        display: "max",
+                        value: input.inputs.max,
+                      },
+                    ],
+                  },
+                }
+              : {
+                  createMany: {
+                    data: input.inputs.values.map((value) => {
+                      return {
+                        display: value.label,
+                        value: value.value,
+                      };
+                    }),
+                  },
+                },
           users: {
             connect: {
               id: session.user.id,
@@ -66,9 +118,6 @@ export const mainRouter = createTRPCRouter({
               id: session.user.id,
             },
           },
-        },
-        include: {
-          categories: true,
         },
       });
       return room;
@@ -117,6 +166,11 @@ export const mainRouter = createTRPCRouter({
         },
       });
       await prisma.category.deleteMany({
+        where: {
+          roomId: room.id,
+        },
+      });
+      await prisma.roomPointValue.deleteMany({
         where: {
           roomId: room.id,
         },
@@ -176,7 +230,6 @@ export const mainRouter = createTRPCRouter({
         },
         include: {
           users: true,
-          categories: true,
         },
       });
       if (!room) {
@@ -233,6 +286,7 @@ export const mainRouter = createTRPCRouter({
         include: {
           users: true,
           categories: true,
+          values: true,
           tickets: {
             include: {
               votes: true,

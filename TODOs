@@ -1,50 +1,52 @@
 Templates:
-    - [ ] Add default point value templates:
-        [ ] Scrum (0, 0.5, 1, 2, 3, 5, 8, 13, 20, 40, 100)
-        [ ] Fibonacci (0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89)
-        [ ] Sequential (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-        [ ] T-Shirt (XS: 0, S: 1, M: 2, L: 3, XL: 4, XXL: 5)
-    - [ ] Custom formats (list of values, input range)
-    - [ ] Default is range [0, 100] with 0.5 step
+    Add default point value templates:
+        [x] Scrum (0, 0.5, 1, 2, 3, 5, 8, 13, 20, 40, 100)
+        [x] Fibonacci (0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89)
+        [x] Sequential (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+        [x] T-Shirt (XS: 0, S: 1, M: 2, L: 3, XL: 4, XXL: 5)
+    [x] Custom formats (list of values, input range)
+    [x] Default is range [1, 10]
+    [x] List of values max amt (15)
+    [x] Add "nearest" result section to lov display rooms
 
 Value/Display Mapping:
-    - [ ] Support custom displaynames for specific values:
-        [ ] -1 = ? (special, input >= 0 should be enforced)
-        [ ] -2 = Coffee (special, input >= 0 should be enforced)
-        [ ] custom (see t-shirt)
+    Support custom displaynames for specific values:
+        [x] -1 = ? (special, input >= 0 should be enforced)
+        [x] -2 = Coffee (special, input >= 0 should be enforced)
+        [x] custom (see t-shirt)
 
 Performance Improvements:
-    - [ ] Drizzle ORM (use joins)
-    - [ ] Don't invalidate room on pusher events, where possible
-    - [ ] Rate limits
-    - [ ] Optimize queries
-    - [ ] Remove redundant mutation returns
-    - [ ] Prefer return mutation data over invalidation
+    [ ] Drizzle ORM (use joins)
+    [ ] Don't invalidate room on pusher events, where possible
+    [ ] Rate limits
+    [ ] Optimize queries
+    [ ] Remove redundant mutation returns
+    [ ] Prefer return mutation data over invalidation
 
 More Room Customization:
-    - [ ] Room member cap, range: [2, 100] int
-    - [ ] Kicking users
-    - [ ] Banning users
+    [ ] Room member cap, range: [2, 100] int
+    [ ] Kicking users
+    [ ] Banning users
 
 UI/UX:
-    - [ ] Reduce layout shift by fixing sections in place
+    [ ] Reduce layout shift by fixing sections in place
 
 Timer:
-    - [ ] Locally only
-    - [ ] Sync w/ client push
-    - [ ] Store start time / stop time in unix ts
-    - [ ] Vote times also stored in unix ts (local state)
+    [ ] Locally only
+    [ ] Sync w/ client push
+    [ ] Store start time / stop time in unix ts
+    [ ] Vote times also stored in unix ts (local state)
 
 External Platform Support:
-    - Imports:
+    Imports:
         [x] JIRA
         [ ] Linear
         [ ] Trello
         [ ] Notion
-    - Exports:
+    Exports:
         [ ] JIRA
         [ ] Linear
         [ ] Trello
         [ ] Notion
-    - OAuth:
+    OAuth:
         [ ] JIRA

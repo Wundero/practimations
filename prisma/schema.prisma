@@ -85,6 +85,19 @@ model Ticket {
     @@index([roomId])
 }
 
+model RoomPointValue {
+    id Int @id @default(autoincrement())
+
+    value   Decimal
+    display String
+
+    room   Room @relation(fields: [roomId], references: [id])
+    roomId Int
+
+    @@unique([roomId, value])
+    @@index([roomId])
+}
+
 model Room {
     id Int @id @default(autoincrement())
 
@@ -97,6 +110,11 @@ model Room {
     tickets    Ticket[]
     categories Category[]
     users      User[]     @relation(name: "UserCurrentRoom")
+
+    values         RoomPointValue[]
+    valueRange     Boolean          @default(true)
+    enableQuestion Boolean          @default(true)
+    enableCoffee   Boolean          @default(true)
 
     @@index([ownerId])
 }

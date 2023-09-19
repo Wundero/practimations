@@ -1,3 +1,4 @@
+import { Decimal } from "decimal.js";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -243,20 +244,7 @@ export const mainRouter = createTRPCRouter({
       if (!room) {
         return room;
       }
-      return {
-        ...room,
-        tickets: room.tickets.map((t) => {
-          return {
-            ...t,
-            results: t.results.map((r) => {
-              return {
-                ...r,
-                value: r.value.toNumber(),
-              };
-            }),
-          };
-        }),
-      };
+      return room;
     }),
   addTickets: protectedProcedure
     .input(
@@ -635,22 +623,22 @@ export const mainRouter = createTRPCRouter({
           category: true,
         },
       });
-      const catSum = new Map<number, number>();
+      const catSum = new Map<number, Decimal>();
       const catCount = new Map<number, number>();
       votes.forEach((vote) => {
-        const current = catSum.get(vote.category.id) ?? 0;
-        catSum.set(vote.category.id, current + vote.value);
+        const current = catSum.get(vote.category.id) ?? new Decimal(0);
+        catSum.set(vote.category.id, current.add(vote.value));
         const currentCount = catCount.get(vote.category.id) ?? 0;
         catCount.set(vote.category.id, currentCount + 1);
       });
-      const results = new Map<number, number>();
+      const results = new Map<number, Decimal>();
       catSum.forEach((sum, catId) => {
         const count = catCount.get(catId) ?? 0;
-        results.set(catId, sum / count);
+        results.set(catId, sum.div(count));
       });
-      const resultObj: Record<number, number> = {};
+      const resultObj: Record<number, Decimal> = {};
       const txItems: {
-        value: number;
+        value: Decimal;
         categoryId: number;
         ticketId: number;
       }[] = [];
@@ -685,23 +673,13 @@ export const mainRouter = createTRPCRouter({
           ignoreUser: session.user.id,
           eventData: {
             id: ticket.id,
-            results: resultTx.map((r) => {
-              return {
-                ...r,
-                value: r.value.toNumber(),
-              };
-            }),
+            results: resultTx,
           },
         },
       });
       return {
         newTicket,
-        results: resultTx.map((r) => {
-          return {
-            ...r,
-            value: r.value.toNumber(),
-          };
-        }),
+        results: resultTx,
       };
     }),
 });

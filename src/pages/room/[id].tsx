@@ -710,13 +710,13 @@ function Room({ id }: RoomProps) {
                                 v.categoryId === category.id,
                             ) && (
                               <span className="font-semibold">
-                                {
-                                  selectedTicket.votes.find(
+                                {selectedTicket.votes
+                                  .find(
                                     (v) =>
                                       v.userId === session.data?.user.id &&
                                       v.categoryId === category.id,
-                                  )!.value
-                                }
+                                  )!
+                                  .value.toFixed(1)}
                               </span>
                             )}
                             <input
@@ -765,7 +765,7 @@ function Room({ id }: RoomProps) {
                                       )}
                                     />
                                     <span className="font-bold">
-                                      {vote.value}
+                                      {vote.value.toFixed(1)}
                                     </span>
                                   </div>
                                 );
@@ -805,10 +805,7 @@ function Room({ id }: RoomProps) {
                         {
                           ticketId: selectedTicket.id,
                           votes: room.categories.map((category) => {
-                            const voteValue = Math.max(
-                              0,
-                              Math.min(10, myVotes[category.id] ?? 1),
-                            );
+                            const voteValue = myVotes[category.id] ?? 1;
                             return {
                               category: category.id,
                               value: voteValue,
@@ -1053,7 +1050,7 @@ function Room({ id }: RoomProps) {
                                         )}
                                       />
                                       <span className="font-bold">
-                                        {vote.value}
+                                        {vote.value.toFixed(1)}
                                       </span>
                                     </div>
                                   );

@@ -3,6 +3,10 @@ import type { GetServerSidePropsContext } from "next";
 import { createTRPCContext } from "./trpc";
 import superjson from "superjson";
 import { appRouter } from "./root";
+import { registerDecimal } from "~/utils/decimal";
+
+registerDecimal();
+
 export const serverSideHelpers = async (ctx: {
   req: GetServerSidePropsContext["req"];
   res: GetServerSidePropsContext["res"];

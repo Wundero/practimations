@@ -1,7 +1,10 @@
 import Pusher from "pusher";
 import { env } from "~/env.mjs";
 import { type ZodType, z } from "zod";
+import { Decimal } from "decimal.js";
 import superjson from "superjson";
+
+superjson.registerClass(Decimal, { identifier: "DecimalJS" });
 
 export const _pusher = new Pusher({
   appId: env.PUSHER_APP_ID,
@@ -17,6 +20,13 @@ const standardData = z.object({
 
 const ticketType = z.enum(["BUG", "TASK", "STORY", "EPIC"]);
 
+const decimalType = z.custom<Decimal>((input) => {
+  if (input instanceof Decimal) {
+    return true;
+  }
+  return false;
+});
+
 function sn<T extends ZodType>(type: T) {
   return z.object({
     ...standardData.shape,
@@ -30,7 +40,7 @@ export const pusherConfig = {
       votes: z.array(
         z.object({
           categoryId: z.number(),
-          value: z.number(),
+          value: decimalType,
           id: z.bigint(),
           ticketId: z.number(),
           userId: z.string(),
@@ -86,7 +96,7 @@ export const pusherConfig = {
           id: z.bigint(),
           ticketId: z.number(),
           categoryId: z.number(),
-          value: z.number(),
+          value: decimalType,
         }),
       ),
     }),

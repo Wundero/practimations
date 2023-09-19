@@ -20,6 +20,9 @@ import {
   MdHome,
   MdHourglassBottom,
   MdOutlineClose,
+  MdPause,
+  MdPlayArrow,
+  MdUpdate,
 } from "react-icons/md";
 import { serverSideHelpers } from "~/server/api/ssr";
 import Link from "next/link";
@@ -28,6 +31,8 @@ import superjson from "superjson";
 import algorithms from "~/utils/math";
 import { BiCoffee } from "react-icons/bi";
 import Decimal from "decimal.js";
+import { useNow } from "~/hooks/useNow";
+import { intervalToDuration } from "date-fns";
 
 type User = {
   id: string;
@@ -149,6 +154,48 @@ type PusherMember = {
   image: string;
 };
 
+type TimerProps = {
+  start: Date | null;
+  end: Date | null;
+  running: boolean;
+};
+
+function customDurationFormat(dur: Duration) {
+  if (dur.seconds === 0 && dur.minutes === 0 && dur.hours === 0) {
+    return "0:00";
+  }
+  if (dur.hours === 0) {
+    return `${dur.minutes ?? 0}:${
+      dur.seconds?.toString().padStart(2, "0") ?? "00"
+    }`;
+  }
+  return `${dur.hours ?? 0}:${
+    dur.minutes?.toString().padStart(2, "0") ?? "00"
+  }:${dur.seconds?.toString().padStart(2, "0") ?? "00"}`;
+}
+
+function Timer({ start, end, running }: TimerProps) {
+  const now = useNow(100);
+
+  const display = useMemo(() => {
+    let dur;
+    if (running && start) {
+      dur = intervalToDuration({ start, end: now });
+    } else if (start && end) {
+      dur = intervalToDuration({ start, end });
+    } else {
+      return "0:00";
+    }
+    return customDurationFormat(dur);
+  }, [start, end, running, now]);
+
+  return (
+    <div className="flex justify-center">
+      <span className="">{display}</span>
+    </div>
+  );
+}
+
 function Room({ id }: RoomProps) {
   const channel = usePusherChannel(`presence-${id}`);
 
@@ -228,6 +275,7 @@ function Room({ id }: RoomProps) {
         // Ignore events from the current user
         return;
       }
+      let invalidate = false;
       switch (eventKey) {
         case "newTickets": {
           const { eventData } = ed as Data<"newTickets">;
@@ -247,6 +295,21 @@ function Room({ id }: RoomProps) {
                   };
                 }),
               ],
+            };
+          });
+          break;
+        }
+        case "updateTimer": {
+          const { eventData } = ed as Data<"updateTimer">;
+          utils.main.getRoom.setData({ slug: id }, (prev) => {
+            if (!prev) {
+              return prev;
+            }
+            return {
+              ...prev,
+              timer: eventData.running,
+              timerStart: eventData.start,
+              timerEnd: eventData.stop ?? null,
             };
           });
           break;
@@ -406,9 +469,12 @@ function Room({ id }: RoomProps) {
           break;
         }
         default:
+          invalidate = true;
           break;
       }
-      utils.main.getRoom.invalidate({ slug: id }).catch(console.error);
+      if (invalidate) {
+        utils.main.getRoom.invalidate({ slug: id }).catch(console.error);
+      }
     },
     [id, router, utils, session],
   );
@@ -439,6 +505,7 @@ function Room({ id }: RoomProps) {
   const voteMutation = api.main.vote.useMutation();
   const clearVotesMutation = api.main.clearVotes.useMutation();
   const setCanVoteMutation = api.main.setCanVote.useMutation();
+  const updateTimer = api.main.updateTimer.useMutation();
 
   const [myVotes, setMyVotes] = useState<Record<number, number>>(
     selectedTicket
@@ -614,6 +681,7 @@ function Room({ id }: RoomProps) {
                     <button
                       className="btn btn-circle btn-ghost btn-xs"
                       onClick={() => {
+                        const start = new Date();
                         utils.main.getRoom.setData(
                           { slug: room.slug },
                           (prev) => {
@@ -622,6 +690,8 @@ function Room({ id }: RoomProps) {
                             }
                             return {
                               ...prev,
+                              timer: true,
+                              timerStart: start,
                               tickets: prev.tickets.map((t) => {
                                 if (t.id === ticket.id) {
                                   return {
@@ -658,6 +728,11 @@ function Room({ id }: RoomProps) {
                             {} as Record<number, number>,
                           ),
                         );
+                        updateTimer.mutate({
+                          roomId: room.id,
+                          running: true,
+                          start,
+                        });
                         selectTicketMutation.mutate(
                           {
                             ticketId: ticket.id,
@@ -684,6 +759,102 @@ function Room({ id }: RoomProps) {
 
         <div className="flex h-fit w-fit  flex-col gap-2 rounded-xl border border-accent p-4">
           <h3 className="text-center">Current Ticket:</h3>
+          <h4 className="flex justify-center gap-4">
+            <Timer
+              running={room.timer}
+              end={room.timerEnd}
+              start={room.timerStart}
+            />
+            {isOwner && (
+              <div className="flex gap-2">
+                <button
+                  className="btn btn-circle btn-ghost btn-xs"
+                  onClick={() => {
+                    const start = new Date();
+                    utils.main.getRoom.setData({ slug: room.slug }, (prev) => {
+                      if (!prev) {
+                        return prev;
+                      }
+                      return {
+                        ...prev,
+                        timer: true,
+                        timerStart: start,
+                      };
+                    });
+                    updateTimer.mutate(
+                      {
+                        start,
+                        running: true,
+                        roomId: room.id,
+                      },
+                      {
+                        onSuccess() {
+                          utils.main.getRoom
+                            .invalidate({ slug: id })
+                            .catch((e) => {
+                              console.error(e);
+                            });
+                        },
+                      },
+                    );
+                  }}
+                >
+                  <MdUpdate size={16} />
+                </button>
+                <button
+                  className="btn btn-circle btn-ghost btn-xs"
+                  onClick={() => {
+                    const end = new Date();
+                    let start = room.timerStart ?? new Date();
+                    if (!room.timer) {
+                      const oldEnd = room.timerEnd;
+                      if (oldEnd) {
+                        const now = new Date();
+                        const oldStart = new Date(
+                          start.getTime() + (now.getTime() - oldEnd.getTime()),
+                        );
+                        start = oldStart;
+                      }
+                    }
+                    utils.main.getRoom.setData({ slug: room.slug }, (prev) => {
+                      if (!prev) {
+                        return prev;
+                      }
+                      return {
+                        ...prev,
+                        timer: !prev.timer,
+                        timerEnd: end,
+                        timerStart: start,
+                      };
+                    });
+                    updateTimer.mutate(
+                      {
+                        start,
+                        stop: end,
+                        running: !room.timer,
+                        roomId: room.id,
+                      },
+                      {
+                        onSuccess() {
+                          utils.main.getRoom
+                            .invalidate({ slug: id })
+                            .catch((e) => {
+                              console.error(e);
+                            });
+                        },
+                      },
+                    );
+                  }}
+                >
+                  {room.timer ? (
+                    <MdPause size={16} />
+                  ) : (
+                    <MdPlayArrow size={16} />
+                  )}
+                </button>
+              </div>
+            )}
+          </h4>
           {selectedTicket && (
             <div
               className={cn(
@@ -951,11 +1122,16 @@ function Room({ id }: RoomProps) {
                                   <div
                                     key={vote.id.toString()}
                                     className="tooltip flex items-center gap-1"
-                                    data-tip={
+                                    data-tip={`${
                                       room.users.find(
                                         (user) => user.id === vote.userId,
                                       )!.name
-                                    }
+                                    } @ ${customDurationFormat(
+                                      intervalToDuration({
+                                        start: room.timerStart!,
+                                        end: vote.updatedAt,
+                                      }),
+                                    )}`}
                                   >
                                     <UserAvatar
                                       user={
@@ -1173,6 +1349,27 @@ function Room({ id }: RoomProps) {
                         })
                       }
                       onClick={() => {
+                        const now = new Date();
+                        utils.main.getRoom.setData(
+                          { slug: room.slug },
+                          (prev) => {
+                            if (!prev) {
+                              return prev;
+                            }
+                            return {
+                              ...prev,
+                              timer: false,
+                              timerStart: now,
+                              timerEnd: now,
+                            };
+                          },
+                        );
+                        updateTimer.mutate({
+                          roomId: room.id,
+                          running: false,
+                          start: now,
+                          stop: now,
+                        });
                         completeTicketMutation.mutate(
                           {
                             ticketId: selectedTicket.id,

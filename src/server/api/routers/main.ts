@@ -744,4 +744,47 @@ export const mainRouter = createTRPCRouter({
         results: resultTx,
       };
     }),
+  updateTimer: protectedProcedure
+    .input(
+      z.object({
+        roomId: z.number(),
+        start: z.date(),
+        stop: z.date().nullish(),
+        running: z.boolean(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { prisma, pusher, session } = ctx;
+      const room = await prisma.room.findUnique({
+        where: {
+          id: input.roomId,
+          ownerId: session.user.id,
+        },
+      });
+      if (!room) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Room not found",
+        });
+      }
+      const updatedRoom = await prisma.room.update({
+        where: {
+          id: input.roomId,
+        },
+        data: {
+          timerStart: input.start,
+          timerEnd: input.stop,
+          timer: input.running,
+        },
+      })
+      await pusher.trigger({
+        channel: getChannelName(room.slug),
+        event: "updateTimer",
+        data: {
+          ignoreUser: session.user.id,
+          eventData: input,
+        },
+      });
+      return updatedRoom;
+    }),
 });

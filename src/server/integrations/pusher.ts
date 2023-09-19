@@ -44,6 +44,7 @@ export const pusherConfig = {
           id: z.bigint(),
           ticketId: z.number(),
           userId: z.string(),
+          updatedAt: z.date(),
         }),
       ),
     }),
@@ -101,6 +102,13 @@ export const pusherConfig = {
       ),
     }),
   ),
+  updateTimer: sn(
+    z.object({
+      start: z.date(),
+      stop: z.date().nullish(),
+      running: z.boolean(),
+    })
+  )
 } as const;
 
 export type Event = keyof typeof pusherConfig;

@@ -35,6 +35,8 @@ model Vote {
 
     value Decimal
 
+    updatedAt DateTime @default(now()) @updatedAt
+
     @@unique([userId, ticketId, categoryId])
     @@index([ticketId])
     @@index([categoryId])
@@ -115,6 +117,10 @@ model Room {
     valueRange     Boolean          @default(true)
     enableQuestion Boolean          @default(true)
     enableCoffee   Boolean          @default(true)
+
+    timerStart DateTime?
+    timerEnd   DateTime?
+    timer      Boolean   @default(false)
 
     maxMembers Int @default(100)
 

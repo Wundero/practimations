@@ -185,7 +185,7 @@ export default function CreateRoomModal(props: {
                 max={Math.min(isNumber(max) ? max - 1 : 100, 100)}
                 onChange={(e) => {
                   setRange((old) => {
-                    return [parseInt(e.target.value), old[1]];
+                    return [parseFloat(e.target.value), old[1]];
                   });
                 }}
                 placeholder="Min"
@@ -198,7 +198,7 @@ export default function CreateRoomModal(props: {
                 min={Math.max(isNumber(min) ? min + 1 : 0, 0)}
                 onChange={(e) => {
                   setRange((old) => {
-                    return [old[0], parseInt(e.target.value)];
+                    return [old[0], parseFloat(e.target.value)];
                   });
                 }}
                 placeholder="Max"

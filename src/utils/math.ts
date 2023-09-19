@@ -3,7 +3,7 @@ import { Decimal } from "decimal.js";
 
 type Tx = Ticket & {
   results: {
-    [K in keyof Result]: Result[K];
+    [K in keyof Result]: Result[K] extends Decimal ? Decimal | string : Result[K];
   }[];
   votes: { [K in keyof Vote]: Vote[K] }[];
 };
@@ -74,7 +74,7 @@ export const squareResults: CalculateValue = (ticket) => {
     return new Decimal(0);
   }
   const total = results.reduce(
-    (acc, result) => acc.add(result.value.mul(result.value)),
+    (acc, result) => acc.add(new Decimal(result.value).mul(result.value)),
     new Decimal(0),
   );
 
@@ -103,7 +103,7 @@ export const nonlinearResults: CalculateValue = (ticket) => {
     return new Decimal(0);
   }
   const total = results.reduce(
-    (acc, result) => acc.add(result.value.pow(NONLINEAR_K)),
+    (acc, result) => acc.add(new Decimal(result.value).pow(NONLINEAR_K)),
     new Decimal(0),
   );
   return total.div(results.length).pow(new Decimal(1).div(NONLINEAR_K));

@@ -514,7 +514,7 @@ function Room({ id }: RoomProps) {
           .reduce((acc, vote) => {
             return {
               ...acc,
-              [vote.categoryId]: vote.value,
+              [vote.categoryId]: new Decimal(vote.value).toNumber(),
             };
           }, {})
       : {},
@@ -713,11 +713,17 @@ function Room({ id }: RoomProps) {
                           room.categories.reduce(
                             (acc, category) => {
                               if (room.valueRange) {
-                                acc[category.id] = room.values
-                                  .find((v) => v.display === "min")!
-                                  .value.toNumber();
+                                acc[category.id] = new Decimal(
+                                  room.values.find(
+                                    (v) => v.display === "min",
+                                  )!.value,
+                                ).toNumber();
                               } else {
                                 acc[category.id] = room.values
+                                  .map((v) => ({
+                                    ...v,
+                                    value: new Decimal(v.value),
+                                  }))
                                   .sort((a, b) =>
                                     a.value.comparedTo(b.value),
                                   )[0]!
@@ -901,22 +907,21 @@ function Room({ id }: RoomProps) {
                                       v.userId === session.data?.user.id &&
                                       v.categoryId === category.id,
                                   )!;
-                                  if (myVote.value.isNegative()) {
-                                    if (myVote.value.eq(-1)) {
+                                  const value = new Decimal(myVote.value);
+                                  if (value.isNegative()) {
+                                    if (value.eq(-1)) {
                                       return "?";
                                     } else {
                                       return <BiCoffee />;
                                     }
                                   }
                                   if (room.valueRange) {
-                                    return myVote.value.toFixed(1);
+                                    return value.toFixed(1);
                                   }
                                   const disp = room.values.find((d) => {
-                                    return d.value.eq(myVote.value);
+                                    return value.eq(d.value);
                                   });
-                                  return (
-                                    disp?.display ?? myVote.value.toFixed(1)
-                                  );
+                                  return disp?.display ?? value.toFixed(1);
                                 })()}
                               </span>
                             )}
@@ -934,7 +939,7 @@ function Room({ id }: RoomProps) {
                                             vote.userId ===
                                               session.data?.user.id &&
                                             vote.categoryId === category.id &&
-                                            vote.value.eq(-1)
+                                            new Decimal(vote.value).eq(-1)
                                           );
                                         }) && myVotes[category.id] !== -1,
                                     })}
@@ -962,7 +967,7 @@ function Room({ id }: RoomProps) {
                                             vote.userId ===
                                               session.data?.user.id &&
                                             vote.categoryId === category.id &&
-                                            vote.value.eq(-2)
+                                            new Decimal(vote.value).eq(-2)
                                           );
                                         }) && myVotes[category.id] !== -2,
                                     })}
@@ -982,9 +987,11 @@ function Room({ id }: RoomProps) {
                                   value={(() => {
                                     const out =
                                       myVotes[category.id] ??
-                                      room.values
-                                        .find((v) => v.display === "min")!
-                                        .value.toNumber();
+                                      new Decimal(
+                                        room.values.find(
+                                          (v) => v.display === "min",
+                                        )!.value,
+                                      ).toNumber();
                                     if (out < 0) {
                                       return "";
                                     } else {
@@ -992,7 +999,7 @@ function Room({ id }: RoomProps) {
                                     }
                                   })()}
                                   onChange={(e) => {
-                                    const value = parseInt(e.target.value);
+                                    const value = parseFloat(e.target.value);
                                     if (isNaN(value)) {
                                       return;
                                     }
@@ -1005,30 +1012,31 @@ function Room({ id }: RoomProps) {
                                   }}
                                   className="input input-bordered text-black dark:text-neutral-content"
                                   type="number"
-                                  min={room.values
-                                    .find((v) => v.display === "min")!
-                                    .value.toNumber()}
-                                  max={room.values
-                                    .find((v) => v.display === "max")!
-                                    .value.toNumber()}
+                                  min={new Decimal(
+                                    room.values.find(
+                                      (v) => v.display === "min",
+                                    )!.value,
+                                  ).toNumber()}
+                                  max={new Decimal(
+                                    room.values.find(
+                                      (v) => v.display === "max",
+                                    )!.value,
+                                  ).toNumber()}
                                 />
                               </div>
                             ) : (
                               <div className="flex max-w-[16rem] flex-wrap gap-2">
                                 {room.values.map((v) => {
-                                  console.log(v);
-                                  if (typeof v === "string") {
-                                    return;
-                                  }
+                                  const value = new Decimal(v.value);
                                   return (
                                     <button
                                       key={v.id}
                                       className={cn("btn btn-sm", {
-                                        "btn-primary": v.value.eq(
+                                        "btn-primary": value.eq(
                                           myVotes[category.id] ?? -3,
                                         ),
                                         "btn-secondary":
-                                          v.value.eq(
+                                          value.eq(
                                             selectedTicket.votes.find(
                                               (vote) => {
                                                 return (
@@ -1040,15 +1048,13 @@ function Room({ id }: RoomProps) {
                                               },
                                             )?.value ?? -3,
                                           ) &&
-                                          !v.value.eq(
-                                            myVotes[category.id] ?? -3,
-                                          ),
+                                          !value.eq(myVotes[category.id] ?? -3),
                                       })}
                                       onClick={() => {
                                         setMyVotes((prev) => {
                                           return {
                                             ...prev,
-                                            [category.id]: v.value.toNumber(),
+                                            [category.id]: value.toNumber(),
                                           };
                                         });
                                       }}
@@ -1070,7 +1076,7 @@ function Room({ id }: RoomProps) {
                                             vote.userId ===
                                               session.data?.user.id &&
                                             vote.categoryId === category.id &&
-                                            vote.value.eq(-1)
+                                            new Decimal(vote.value).eq(-1)
                                           );
                                         }) && myVotes[category.id] !== -1,
                                     })}
@@ -1098,7 +1104,7 @@ function Room({ id }: RoomProps) {
                                             vote.userId ===
                                               session.data?.user.id &&
                                             vote.categoryId === category.id &&
-                                            vote.value.eq(-2)
+                                            new Decimal(vote.value).eq(-2)
                                           );
                                         }) && myVotes[category.id] !== -2,
                                     })}
@@ -1122,6 +1128,7 @@ function Room({ id }: RoomProps) {
                             {selectedTicket.votes
                               .filter((vote) => vote.categoryId === category.id)
                               .map((vote) => {
+                                const value = new Decimal(vote.value);
                                 return (
                                   <div
                                     key={vote.id.toString()}
@@ -1149,21 +1156,21 @@ function Room({ id }: RoomProps) {
                                     />
                                     <span className="font-bold">
                                       {(() => {
-                                        if (vote.value.isNegative()) {
-                                          if (vote.value.eq(-1)) {
+                                        if (value.isNegative()) {
+                                          if (value.eq(-1)) {
                                             return "?";
                                           } else {
                                             return <BiCoffee />;
                                           }
                                         }
                                         if (room.valueRange) {
-                                          return vote.value.toFixed(1);
+                                          return value.toFixed(1);
                                         }
                                         const disp = room.values.find((d) => {
-                                          return d.value.eq(vote.value);
+                                          return value.eq(d.value);
                                         });
                                         return (
-                                          disp?.display ?? vote.value.toFixed(1)
+                                          disp?.display ?? value.toFixed(1)
                                         );
                                       })()}
                                     </span>
@@ -1177,7 +1184,7 @@ function Room({ id }: RoomProps) {
                   })}
                   {!selectedTicket.voting &&
                     !selectedTicket.votes.some((v) => {
-                      return v.value.isNegative();
+                      return new Decimal(v.value).isNegative();
                     }) && (
                       <>
                         {Object.entries(algorithms).map(([algo, fn]) => {
@@ -1192,12 +1199,12 @@ function Room({ id }: RoomProps) {
                               const v = room.values[i]!.value;
                               if (argmin === -1) {
                                 argmin = i;
-                                argdel = v.sub(value).abs();
+                                argdel = value.sub(v).abs();
                               } else if (
-                                argdel.greaterThan(v.sub(value).abs())
+                                argdel.greaterThan(value.sub(v).abs())
                               ) {
                                 argmin = i;
-                                argdel = v.sub(value).abs();
+                                argdel = value.sub(v).abs();
                               }
                             }
                             nearest =
@@ -1230,7 +1237,10 @@ function Room({ id }: RoomProps) {
                 <div className="flex justify-center gap-2 rounded-md bg-neutral p-2">
                   <button
                     className="btn"
-                    disabled={!selectedTicket.voting}
+                    disabled={
+                      !selectedTicket.voting ||
+                      Object.keys(myVotes).length < room.categories.length
+                    }
                     onClick={() => {
                       voteMutation.mutate(
                         {
@@ -1349,7 +1359,7 @@ function Room({ id }: RoomProps) {
                         selectedTicket.votes.length === 0 ||
                         selectedTicket.voting ||
                         selectedTicket.votes.some((v) => {
-                          return v.value.isNegative();
+                          return new Decimal(v.value).isNegative();
                         })
                       }
                       onClick={() => {
@@ -1467,6 +1477,7 @@ function Room({ id }: RoomProps) {
                       if (!result) {
                         return null;
                       }
+                      const value = new Decimal(result.value);
                       return (
                         <div
                           key={category.id}
@@ -1478,20 +1489,20 @@ function Room({ id }: RoomProps) {
                             </span>
                             <span className="font-semibold">
                               {(() => {
-                                if (result.value.isNegative()) {
-                                  if (result.value.eq(-1)) {
+                                if (value.isNegative()) {
+                                  if (value.eq(-1)) {
                                     return "?";
                                   } else {
                                     return <BiCoffee />;
                                   }
                                 }
                                 if (room.valueRange) {
-                                  return result.value.toFixed(1);
+                                  return value.toFixed(1);
                                 }
                                 const disp = room.values.find((d) => {
-                                  return d.value.eq(result.value);
+                                  return value.eq(d.value);
                                 });
-                                return disp?.display ?? result.value.toFixed(1);
+                                return disp?.display ?? value.toFixed(1);
                               })()}
                             </span>
                           </div>
@@ -1502,6 +1513,7 @@ function Room({ id }: RoomProps) {
                                   (vote) => vote.categoryId === category.id,
                                 )
                                 .map((vote) => {
+                                  const value = new Decimal(vote.value);
                                   return (
                                     <div
                                       key={vote.id.toString()}
@@ -1524,22 +1536,21 @@ function Room({ id }: RoomProps) {
                                       />
                                       <span className="font-bold">
                                         {(() => {
-                                          if (vote.value.isNegative()) {
-                                            if (vote.value.eq(-1)) {
+                                          if (value.isNegative()) {
+                                            if (value.eq(-1)) {
                                               return "?";
                                             } else {
                                               return <BiCoffee />;
                                             }
                                           }
                                           if (room.valueRange) {
-                                            return vote.value.toFixed(1);
+                                            return value.toFixed(1);
                                           }
                                           const disp = room.values.find((d) => {
-                                            return d.value.eq(vote.value);
+                                            return value.eq(d.value);
                                           });
                                           return (
-                                            disp?.display ??
-                                            vote.value.toFixed(1)
+                                            disp?.display ?? value.toFixed(1)
                                           );
                                         })()}
                                       </span>
@@ -1563,10 +1574,10 @@ function Room({ id }: RoomProps) {
                           const v = room.values[i]!.value;
                           if (argmin === -1) {
                             argmin = i;
-                            argdel = v.sub(value).abs();
-                          } else if (argdel.greaterThan(v.sub(value).abs())) {
+                            argdel = value.sub(v).abs();
+                          } else if (argdel.greaterThan(value.sub(v).abs())) {
                             argmin = i;
-                            argdel = v.sub(value).abs();
+                            argdel = value.sub(v).abs();
                           }
                         }
                         nearest =

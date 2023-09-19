@@ -1016,6 +1016,7 @@ function Room({ id }: RoomProps) {
                             ) : (
                               <div className="flex max-w-[16rem] flex-wrap gap-2">
                                 {room.values.map((v) => {
+                                  console.log(v.value, v.value.eq, v.value.equals);
                                   return (
                                     <button
                                       key={v.id}

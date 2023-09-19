@@ -17,14 +17,14 @@ Value/Display Mapping:
 
 Performance Improvements:
     [ ] Drizzle ORM (use joins)
-    [ ] Don't invalidate room on pusher events, where possible
+    [x] Don't invalidate room on pusher events, where possible
     [ ] Rate limits
     [ ] Optimize queries
     [ ] Remove redundant mutation returns
     [ ] Prefer return mutation data over invalidation
 
 More Room Customization:
-    [ ] Room member cap, range: [2, 100] int
+    [x] Room member cap, range: [2, 100] int
     [ ] Kicking users
     [ ] Banning users
 
@@ -32,10 +32,10 @@ UI/UX:
     [ ] Reduce layout shift by fixing sections in place
 
 Timer:
-    [ ] Locally only
-    [ ] Sync w/ client push
-    [ ] Store start time / stop time in unix ts
-    [ ] Vote times also stored in unix ts (local state)
+    [-] Locally only
+    [-] Sync w/ client push
+    [x] Store start time / stop time in unix ts
+    [x] Vote times also stored in unix ts
 
 External Platform Support:
     Imports:

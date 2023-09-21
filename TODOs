@@ -30,6 +30,7 @@ More Room Customization:
 
 UI/UX:
     [ ] Reduce layout shift by fixing sections in place
+    [ ] Remove join room button
 
 Timer:
     [-] Locally only

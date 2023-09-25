@@ -502,6 +502,10 @@ function Room({ id }: RoomProps) {
     return room.tickets.find((ticket) => ticket.selected);
   }, [room]);
 
+  const loc = useMemo(() => {
+    return typeof window !== "undefined" ? window.location.origin : "";
+  }, []);
+
   const deleteTicketMutation = api.main.removeTickets.useMutation();
   const selectTicketMutation = api.main.selectTicket.useMutation();
   const completeTicketMutation = api.main.completeTicket.useMutation();
@@ -580,7 +584,12 @@ function Room({ id }: RoomProps) {
         >
           <HtmlDialog open={qrOpen} onClose={() => setQrOpen(false)}>
             <div className="modal-box max-w-3xl">
-              <QRCode contents={`${window.location.origin}/join/${room.slug}`}>
+              <QRCode
+                contents={`${loc}/join/${room.slug}`}
+                moduleColor="hsl(var(--pc))"
+                positionRingColor="hsl(var(--pc))"
+                positionCenterColor="hsl(var(--pc))"
+              >
                 <div className="flex justify-center">
                   <img src={"/favicon.ico"} alt={"practimations"} />
                 </div>

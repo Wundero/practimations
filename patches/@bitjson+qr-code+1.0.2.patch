@@ -1,0 +1,13 @@
+diff --git a/node_modules/@bitjson/qr-code/dist/types/components.d.ts b/node_modules/@bitjson/qr-code/dist/types/components.d.ts
+index 1da1cf4..5f3cbac 100644
+--- a/node_modules/@bitjson/qr-code/dist/types/components.d.ts
++++ b/node_modules/@bitjson/qr-code/dist/types/components.d.ts
+@@ -74,6 +74,8 @@ declare global {
+       'positionRingColor'?: string;
+       'protocol'?: string;
+       'squares'?: boolean;
++      ref?: JSX.Ref<HTMLQrCodeElement>;
++      children?: Element | React.ReactNode;
+     }
+   }
+ }

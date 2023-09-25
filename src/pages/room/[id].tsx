@@ -22,6 +22,7 @@ import {
   MdOutlineClose,
   MdPause,
   MdPlayArrow,
+  MdShare,
   MdUpdate,
 } from "react-icons/md";
 import { serverSideHelpers } from "~/server/api/ssr";
@@ -33,6 +34,8 @@ import { BiCoffee } from "react-icons/bi";
 import Decimal from "decimal.js";
 import { useNow } from "~/hooks/useNow";
 import { intervalToDuration } from "date-fns";
+import { HtmlDialog } from "~/components/htmlDialog";
+import { QRCode } from "~/components/qrcode";
 
 type User = {
   id: string;
@@ -534,6 +537,8 @@ function Room({ id }: RoomProps) {
     number[]
   >([]);
 
+  const [qrOpen, setQrOpen] = useState(false);
+
   if (!room) {
     return <div className="loading loading-spinner loading-lg"></div>;
   }
@@ -566,6 +571,34 @@ function Room({ id }: RoomProps) {
             }}
           >
             <MdContentCopy size={16} />
+          </button>
+        </div>
+        <div
+          className={cn({
+            "tooltip tooltip-bottom tooltip-open": showCopyMsg,
+          })}
+        >
+          <HtmlDialog open={qrOpen} onClose={() => setQrOpen(false)}>
+            <div className="modal-box max-w-3xl">
+              <QRCode contents={`${window.location.origin}/join/${room.slug}`}>
+                <div className="flex justify-center">
+                  <img src={"/favicon.ico"} alt={"practimations"} />
+                </div>
+              </QRCode>
+              <div className="modal-action">
+                <button className="btn" onClick={() => setQrOpen(false)}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </HtmlDialog>
+          <button
+            className="btn btn-circle btn-ghost btn-sm"
+            onClick={() => {
+              setQrOpen(true);
+            }}
+          >
+            <MdShare size={16} />
           </button>
         </div>
       </h1>

@@ -612,7 +612,7 @@ function Room({ id }: RoomProps) {
           </button>
         </div>
       </h1>
-      <div className="grid grid-cols-4 gap-4 pt-2 justify-items-center">
+      <div className="grid grid-cols-4 justify-items-center gap-4 pt-2">
         <ADiv className="flex h-fit w-fit flex-col gap-2 rounded-xl border border-accent p-4">
           <span className="text-center text-lg font-bold">
             Users ({room.users.length}/{room.maxMembers})
@@ -1478,7 +1478,7 @@ function Room({ id }: RoomProps) {
                     },
                   )}
                 >
-                  <div className="relative flex w-full justify-center">
+                  <div className="flex w-full justify-between">
                     <a
                       href={ticket.url}
                       target="_blank"
@@ -1486,32 +1486,30 @@ function Room({ id }: RoomProps) {
                     >
                       {ticket.title}
                     </a>
-                    <div className="absolute right-0">
-                      <div className="tooltip" data-tip="More info">
-                        <button
-                          className="btn btn-circle btn-ghost btn-xs"
-                          onClick={() => {
-                            setCompletedTicketShowMore((old) => {
-                              if (old.includes(ticket.id)) {
-                                return old.filter(
-                                  (ticketId) => ticketId !== ticket.id,
-                                );
-                              } else {
-                                return [...old, ticket.id];
-                              }
-                            });
-                          }}
-                        >
-                          <MdAdd
-                            size={16}
-                            className={cn("transition-transform", {
-                              "rotate-45": completedTicketShowMore.includes(
-                                ticket.id,
-                              ),
-                            })}
-                          />
-                        </button>
-                      </div>
+                    <div className="tooltip" data-tip="More info">
+                      <button
+                        className="btn btn-circle btn-ghost btn-xs"
+                        onClick={() => {
+                          setCompletedTicketShowMore((old) => {
+                            if (old.includes(ticket.id)) {
+                              return old.filter(
+                                (ticketId) => ticketId !== ticket.id,
+                              );
+                            } else {
+                              return [...old, ticket.id];
+                            }
+                          });
+                        }}
+                      >
+                        <MdAdd
+                          size={16}
+                          className={cn("transition-transform", {
+                            "rotate-45": completedTicketShowMore.includes(
+                              ticket.id,
+                            ),
+                          })}
+                        />
+                      </button>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">

@@ -622,7 +622,7 @@ function Room({ id }: RoomProps) {
           </button>
         </div>
       </h1>
-      <div className="grid grid-cols-4 justify-items-center gap-4 pt-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 order-1 justify-items-center gap-4 pt-2">
         <ADiv className="flex h-fit w-fit flex-col gap-2 rounded-xl border border-accent p-4">
           <span className="text-center text-lg font-bold">
             Users ({room.users.length}/{room.maxMembers})
@@ -658,7 +658,7 @@ function Room({ id }: RoomProps) {
             );
           })}
         </ADiv>
-        <ADiv className="flex h-fit w-fit flex-col gap-2 rounded-xl border border-accent p-4">
+        <ADiv className="flex h-fit w-fit flex-col gap-2 order-3 xl:order-2 rounded-xl border border-accent p-4">
           <h3 className="text-center">Incomplete tickets</h3>
           {isOwner && (
             <button
@@ -816,7 +816,7 @@ function Room({ id }: RoomProps) {
             })}
         </ADiv>
 
-        <ADiv className="flex h-fit w-fit flex-col gap-2 rounded-xl border border-accent p-4">
+        <ADiv className="flex h-fit w-fit flex-col gap-2 rounded-xl order-2 xl:order-3 border border-accent p-4">
           <h3 className="text-center">Current Ticket:</h3>
           <h4 className="flex justify-center gap-4">
             <Timer
@@ -1287,7 +1287,7 @@ function Room({ id }: RoomProps) {
                       </>
                     )}
                 </div>
-                <div className="flex justify-center gap-2 rounded-md bg-base-100 p-2">
+                <div className="flex flex-wrap justify-center gap-2 rounded-md bg-base-100 p-2">
                   <button
                     className="btn"
                     disabled={
@@ -1469,7 +1469,7 @@ function Room({ id }: RoomProps) {
           )}
         </ADiv>
 
-        <ADiv className="flex h-fit w-fit flex-col gap-2 rounded-xl border border-accent p-4">
+        <ADiv className="flex h-fit w-fit flex-col gap-2 rounded-xl order-4 border border-accent p-4">
           <h3 className="text-center">Complete tickets</h3>
           {room.tickets
             .filter((ticket) => ticket.done)

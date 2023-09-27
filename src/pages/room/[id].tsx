@@ -387,10 +387,12 @@ function Room({ id }: RoomProps) {
                   return {
                     ...ticket,
                     selected: true,
+                    voting: true,
                   };
                 } else {
                   return {
                     ...ticket,
+                    voting: false,
                     selected: false,
                   };
                 }

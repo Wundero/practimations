@@ -414,6 +414,8 @@ function Room({ id }: RoomProps) {
                   return {
                     ...ticket,
                     done: true,
+                    voting: false,
+                    selected: false,
                     results: eventData.results,
                   };
                 } else {

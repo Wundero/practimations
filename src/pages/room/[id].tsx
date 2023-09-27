@@ -36,6 +36,7 @@ import { useNow } from "~/hooks/useNow";
 import { intervalToDuration } from "date-fns";
 import { HtmlDialog } from "~/components/htmlDialog";
 import { QRCode } from "~/components/qrcode";
+import { ADiv } from "~/components/aDiv";
 
 type User = {
   id: string;
@@ -611,8 +612,8 @@ function Room({ id }: RoomProps) {
           </button>
         </div>
       </h1>
-      <div className="flex flex-wrap justify-around gap-2 pt-2">
-        <div className="flex h-fit w-fit flex-col gap-2 rounded-xl border border-accent p-4">
+      <div className="grid grid-cols-4 gap-4 pt-2 justify-items-center">
+        <ADiv className="flex h-fit w-fit flex-col gap-2 rounded-xl border border-accent p-4">
           <span className="text-center text-lg font-bold">
             Users ({room.users.length}/{room.maxMembers})
           </span>
@@ -646,8 +647,8 @@ function Room({ id }: RoomProps) {
               </div>
             );
           })}
-        </div>
-        <div className="flex h-fit  w-fit flex-col gap-2 rounded-xl border border-accent p-4">
+        </ADiv>
+        <ADiv className="flex h-fit w-fit flex-col gap-2 rounded-xl border border-accent p-4">
           <h3 className="text-center">Incomplete tickets</h3>
           {isOwner && (
             <button
@@ -803,9 +804,9 @@ function Room({ id }: RoomProps) {
                 </div>
               );
             })}
-        </div>
+        </ADiv>
 
-        <div className="flex h-fit w-fit  flex-col gap-2 rounded-xl border border-accent p-4">
+        <ADiv className="flex h-fit w-fit flex-col gap-2 rounded-xl border border-accent p-4">
           <h3 className="text-center">Current Ticket:</h3>
           <h4 className="flex justify-center gap-4">
             <Timer
@@ -1456,9 +1457,9 @@ function Room({ id }: RoomProps) {
               </div>
             </div>
           )}
-        </div>
+        </ADiv>
 
-        <div className="flex h-fit  w-fit flex-col gap-2 rounded-xl border border-accent p-4">
+        <ADiv className="flex h-fit w-fit flex-col gap-2 rounded-xl border border-accent p-4">
           <h3 className="text-center">Complete tickets</h3>
           {room.tickets
             .filter((ticket) => ticket.done)
@@ -1477,7 +1478,7 @@ function Room({ id }: RoomProps) {
                     },
                   )}
                 >
-                  <div className="flex gap-3">
+                  <div className="relative flex w-full justify-center">
                     <a
                       href={ticket.url}
                       target="_blank"
@@ -1485,30 +1486,32 @@ function Room({ id }: RoomProps) {
                     >
                       {ticket.title}
                     </a>
-                    <div className="tooltip" data-tip="More info">
-                      <button
-                        className="btn btn-circle btn-ghost btn-xs"
-                        onClick={() => {
-                          setCompletedTicketShowMore((old) => {
-                            if (old.includes(ticket.id)) {
-                              return old.filter(
-                                (ticketId) => ticketId !== ticket.id,
-                              );
-                            } else {
-                              return [...old, ticket.id];
-                            }
-                          });
-                        }}
-                      >
-                        <MdAdd
-                          size={16}
-                          className={cn("transition-transform", {
-                            "rotate-45": completedTicketShowMore.includes(
-                              ticket.id,
-                            ),
-                          })}
-                        />
-                      </button>
+                    <div className="absolute right-0">
+                      <div className="tooltip" data-tip="More info">
+                        <button
+                          className="btn btn-circle btn-ghost btn-xs"
+                          onClick={() => {
+                            setCompletedTicketShowMore((old) => {
+                              if (old.includes(ticket.id)) {
+                                return old.filter(
+                                  (ticketId) => ticketId !== ticket.id,
+                                );
+                              } else {
+                                return [...old, ticket.id];
+                              }
+                            });
+                          }}
+                        >
+                          <MdAdd
+                            size={16}
+                            className={cn("transition-transform", {
+                              "rotate-45": completedTicketShowMore.includes(
+                                ticket.id,
+                              ),
+                            })}
+                          />
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -1521,7 +1524,7 @@ function Room({ id }: RoomProps) {
                       }
                       const value = new Decimal(result.value);
                       return (
-                        <div
+                        <ADiv
                           key={category.id}
                           className=" flex flex-col gap-2 rounded-md bg-neutral-focus/25 p-2"
                         >
@@ -1601,7 +1604,7 @@ function Room({ id }: RoomProps) {
                                 })}
                             </div>
                           )}
-                        </div>
+                        </ADiv>
                       );
                     })}
                     {Object.entries(algorithms).map(([algo, fn]) => {
@@ -1650,7 +1653,7 @@ function Room({ id }: RoomProps) {
                 </div>
               );
             })}
-        </div>
+        </ADiv>
       </div>
 
       <AddTicketsModal

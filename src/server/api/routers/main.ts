@@ -215,6 +215,9 @@ export const mainRouter = createTRPCRouter({
         slug: true,
         name: true,
       },
+      orderBy: {
+        id: "desc",
+      },
     });
     return rooms;
   }),
@@ -294,7 +297,11 @@ export const mainRouter = createTRPCRouter({
         include: {
           users: true,
           categories: true,
-          values: true,
+          values: {
+            orderBy: {
+              value: "asc",
+            },
+          },
           tickets: {
             include: {
               votes: true,
@@ -776,7 +783,7 @@ export const mainRouter = createTRPCRouter({
           timerEnd: input.stop,
           timer: input.running,
         },
-      })
+      });
       await pusher.trigger({
         channel: getChannelName(room.slug),
         event: "updateTimer",

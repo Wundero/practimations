@@ -5,6 +5,7 @@ import { cn } from "~/utils/cn";
 import { type Ticket, getJiraTickets } from "~/utils/jira";
 import type { TicketType } from "@prisma/client";
 import { MdOutlineClose } from "react-icons/md";
+import { ADiv } from "~/components/aDiv";
 
 export default function AddTicketsModal(props: {
   open: boolean;
@@ -166,7 +167,7 @@ export default function AddTicketsModal(props: {
             {tickets.length} Tickets (click to{" "}
             {ticketsExpanded ? "hide" : "show"})
           </div>
-          <div className="collapse-content my-2 flex flex-col gap-1">
+          <ADiv className="collapse-content my-2 flex flex-col gap-1">
             {tickets.map((ticket) => {
               return (
                 <div
@@ -202,7 +203,7 @@ export default function AddTicketsModal(props: {
                 </div>
               );
             })}
-          </div>
+          </ADiv>
         </div>
         <div className="modal-action">
           <button

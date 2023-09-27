@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import { cn } from "~/utils/cn";
 import { MdOutlineClose } from "react-icons/md";
 import { BiCoffee } from "react-icons/bi";
+import { ADiv } from "./aDiv";
 
 type Value = {
   value: number;
@@ -207,7 +208,7 @@ export default function CreateRoomModal(props: {
             </div>
           ) : (
             <div className="flex flex-col gap-2 border border-accent p-2 rounded-md">
-              <div className="flex flex-wrap gap-2">
+              <ADiv className="flex flex-wrap gap-2">
                 {valuesSorted.map((value) => {
                   return (
                     <span
@@ -226,7 +227,7 @@ export default function CreateRoomModal(props: {
                     </span>
                   );
                 })}
-              </div>
+              </ADiv>
               <div className="flex flex-col gap-2">
                 <input
                   type="text"

@@ -2,8 +2,6 @@ import type { GetServerSideProps } from "next";
 import { signIn, useSession } from "next-auth/react";
 import { getServerAuthSession } from "~/server/auth";
 import { FaGithub } from "react-icons/fa";
-
-import JoinRoomModal from "~/components/joinRoomModal";
 import { useMemo, useState } from "react";
 import CreateRoomModal from "~/components/createRoomModal";
 import { api } from "~/utils/api";
@@ -22,7 +20,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 };
 
 function RoomInput() {
-  const [joinDialogOpen, setJoinDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -42,13 +39,6 @@ function RoomInput() {
         <button className="btn" onClick={() => setCreateDialogOpen(true)}>
           Create a room
         </button>
-        <button className="btn" onClick={() => setJoinDialogOpen(true)}>
-          Join a room
-        </button>
-        <JoinRoomModal
-          open={joinDialogOpen}
-          onClose={() => setJoinDialogOpen(false)}
-        />
         <CreateRoomModal
           open={createDialogOpen}
           onClose={() => setCreateDialogOpen(false)}
@@ -153,6 +143,16 @@ export default function Home() {
             <span>Estimates for the </span>
             <span className="text-[hsl(280,100%,70%)]">soul</span>
           </h2>
+          <h3>
+            <Link
+              className="flex items-center gap-2"
+              target="_blank"
+              href="https://github.com/Wundero/practimations"
+            >
+              Check out the project on <FaGithub />
+              <span className="link">GitHub</span>
+            </Link>
+          </h3>
           <div className="flex flex-col items-center gap-2">
             {session.status === "loading" ? (
               <span className="loading loading-dots text-primary"></span>

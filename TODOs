@@ -14,6 +14,7 @@ Value/Display Mapping:
         [x] -1 = ? (special, input >= 0 should be enforced)
         [x] -2 = Coffee (special, input >= 0 should be enforced)
         [x] custom (see t-shirt)
+        [ ] Sort the items
 
 Performance Improvements:
     [ ] Drizzle ORM (use joins)
@@ -22,6 +23,7 @@ Performance Improvements:
     [ ] Optimize queries
     [ ] Remove redundant mutation returns
     [ ] Prefer return mutation data over invalidation
+    [ ] Vector clock for pusher events to keep things in sync
 
 More Room Customization:
     [x] Room member cap, range: [2, 100] int
@@ -30,7 +32,15 @@ More Room Customization:
 
 UI/UX:
     [ ] Reduce layout shift by fixing sections in place
-    [ ] Remove join room button
+    [ ] Make nicer styling or whatever
+    [x] Remove join room button
+    [x] Github Link on main page to repo
+    [x] Fix "Copied!" tooltip showing in the wrong place
+    [ ] Confirmation dialogs for clear, complete
+    [ ] Fix selection of tickets sometimes not enabling voting on other clients
+    [x] Enable logs on prod
+    [ ] Prettify pusher event logs to be like tRPC logs
+    [ ] + for expanding ticket info should be right justified
 
 Timer:
     [-] Locally only

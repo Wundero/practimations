@@ -212,7 +212,7 @@ function Room({ id }: RoomProps) {
 
   const handlePusherEvent = useCallback(
     (event: string, data: unknown) => {
-      if (process.env.NODE_ENV === "development") {
+      if (process.env.NODE_ENV === "development" || true) {
         console.log("RECEIVED PUSHER EVENT:", event, data);
       }
       // Nonstandard events (pusher, room deletion) - these cannot be skipped for current user
@@ -577,11 +577,7 @@ function Room({ id }: RoomProps) {
             <MdContentCopy size={16} />
           </button>
         </div>
-        <div
-          className={cn({
-            "tooltip tooltip-bottom tooltip-open": showCopyMsg,
-          })}
-        >
+        <div>
           <HtmlDialog open={qrOpen} onClose={() => setQrOpen(false)}>
             <div className="modal-box max-w-3xl">
               <QRCode

@@ -562,7 +562,7 @@ function Room({ id }: RoomProps) {
         </Link>
       </div>
       <h1 className="flex items-center justify-center gap-2 p-4 text-center text-3xl font-extrabold">
-        {room.name}
+        <div className="px-2">{room.name}</div>
         <div
           className={cn({
             "tooltip tooltip-bottom tooltip-open": showCopyMsg,

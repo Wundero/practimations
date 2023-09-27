@@ -157,7 +157,7 @@ export default function AddTicketsModal(props: {
             </button>
           </form>
         </div>
-        <div className="collapse bg-neutral-focus text-neutral-content">
+        <div className="collapse bg-base-200 text-base-content">
           <input
             type="checkbox"
             checked={ticketsExpanded}

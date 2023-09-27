@@ -37,6 +37,7 @@ import { intervalToDuration } from "date-fns";
 import { HtmlDialog } from "~/components/htmlDialog";
 import { QRCode } from "~/components/qrcode";
 import { ADiv } from "~/components/aDiv";
+import { useTheme } from "next-themes";
 
 type User = {
   id: string;
@@ -132,7 +133,7 @@ function UserAvatar({ user, presence }: { user: User; presence?: boolean }) {
           offline: !presence,
         })}
       >
-        <div className="w-8 rounded-full bg-neutral-focus text-neutral-content">
+        <div className="w-8 rounded-full bg-base-300 text-base-content">
           <span className="text-sm">{user.name?.[0] ?? "?"}</span>
         </div>
       </div>
@@ -532,6 +533,8 @@ function Room({ id }: RoomProps) {
       : {},
   );
 
+  const theme = useTheme();
+
   const isOwner = useMemo(() => {
     return session.data?.user.id === room?.ownerId;
   }, [room, session]);
@@ -587,12 +590,19 @@ function Room({ id }: RoomProps) {
             <div className="modal-box max-w-3xl">
               <QRCode
                 contents={`${loc}/join/${room.slug}`}
-                moduleColor="hsl(var(--pc))"
-                positionRingColor="hsl(var(--pc))"
-                positionCenterColor="hsl(var(--pc))"
+                moduleColor="hsl(var(--bc))"
+                positionRingColor="hsl(var(--bc))"
+                positionCenterColor="hsl(var(--bc))"
               >
                 <div className="flex justify-center">
-                  <img src={"/favicon.ico"} alt={"practimations"} />
+                  <img
+                    src={"/favicon.ico"}
+                    alt={"practimations"}
+                    className={cn({
+                      "rounded-md bg-base-content p-2":
+                        theme.resolvedTheme === "light",
+                    })}
+                  />
                 </div>
               </QRCode>
               <div className="modal-action">
@@ -620,7 +630,7 @@ function Room({ id }: RoomProps) {
           {room.users.map((user) => {
             return (
               <div
-                className="flex w-fit items-center gap-2 rounded-xl bg-neutral-focus px-2 py-1 text-neutral-content"
+                className="flex w-fit items-center gap-2 rounded-xl bg-base-300 px-2 py-1 text-base-content"
                 key={user.id}
               >
                 <UserAvatar
@@ -642,7 +652,7 @@ function Room({ id }: RoomProps) {
                 {!!selectedTicket &&
                   selectedTicket.votes.filter((vote) => vote.userId === user.id)
                     .length === 0 && (
-                    <MdHourglassBottom className="text-neutral-content" />
+                    <MdHourglassBottom className="text-base-content" />
                   )}
               </div>
             );
@@ -931,9 +941,9 @@ function Room({ id }: RoomProps) {
                     return (
                       <div
                         key={category.id}
-                        className="flex items-center justify-between gap-2 rounded-md bg-neutral-focus/25 p-2"
+                        className="flex items-center justify-between gap-2 rounded-md bg-base-300/25 p-2"
                       >
-                        <span className="rounded-full bg-neutral-focus px-2 capitalize text-neutral-content">
+                        <span className="rounded-full bg-base-300 px-2 capitalize text-base-content">
                           {category.name}
                         </span>
                         {selectedTicket.voting ? (
@@ -1053,7 +1063,7 @@ function Room({ id }: RoomProps) {
                                       };
                                     });
                                   }}
-                                  className="input input-bordered text-black dark:text-neutral-content"
+                                  className="input input-bordered text-base-content"
                                   type="number"
                                   min={new Decimal(
                                     room.values.find(
@@ -1256,9 +1266,9 @@ function Room({ id }: RoomProps) {
                           return (
                             <div
                               key={algo}
-                              className="flex items-center justify-between gap-2 rounded-md bg-neutral-focus/25 p-2"
+                              className="flex items-center justify-between gap-2 rounded-md bg-base-300/25 p-2"
                             >
-                              <span className="rounded-full bg-neutral-focus px-2 text-lg font-bold capitalize text-neutral-content">
+                              <span className="rounded-full bg-base-300 px-2 text-lg font-bold capitalize text-base-content">
                                 {algo}
                               </span>
 
@@ -1277,7 +1287,7 @@ function Room({ id }: RoomProps) {
                       </>
                     )}
                 </div>
-                <div className="flex justify-center gap-2 rounded-md bg-neutral p-2">
+                <div className="flex justify-center gap-2 rounded-md bg-base-100 p-2">
                   <button
                     className="btn"
                     disabled={
@@ -1524,10 +1534,10 @@ function Room({ id }: RoomProps) {
                       return (
                         <ADiv
                           key={category.id}
-                          className=" flex flex-col gap-2 rounded-md bg-neutral-focus/25 p-2"
+                          className=" flex flex-col gap-2 rounded-md bg-base-300/25 p-2"
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <span className="rounded-full bg-neutral-focus px-2 capitalize text-neutral-content">
+                            <span className="rounded-full bg-base-300 px-2 capitalize text-base-content">
                               {category.name}
                             </span>
                             <span className="font-semibold">
@@ -1629,9 +1639,9 @@ function Room({ id }: RoomProps) {
                       return (
                         <div
                           key={algo}
-                          className="flex items-center justify-between gap-2 rounded-md bg-neutral-focus/25 p-2"
+                          className="flex items-center justify-between gap-2 rounded-md bg-base-300/25 p-2"
                         >
-                          <span className="rounded-full bg-neutral-focus px-2 text-lg font-bold capitalize text-neutral-content">
+                          <span className="rounded-full bg-base-300 px-2 text-lg font-bold capitalize text-base-content">
                             {algo}
                           </span>
 

@@ -103,7 +103,7 @@ export default function CreateRoomModal(props: {
           className="input input-bordered w-full"
         />
         <div className="p-2" />
-        <div className="flex flex-col gap-4 border border-accent p-2 rounded-md">
+        <div className="flex flex-col gap-4 rounded-md border border-accent p-2">
           <div className="flex flex-wrap gap-2">
             {categories.map((category, i) => {
               return (
@@ -178,7 +178,7 @@ export default function CreateRoomModal(props: {
             />
           </label>
           {valueRange ? (
-            <div className="flex flex-col gap-2 border border-accent p-2 rounded-md">
+            <div className="flex flex-col gap-2 rounded-md border border-accent p-2">
               <input
                 type="number"
                 value={min}
@@ -207,13 +207,13 @@ export default function CreateRoomModal(props: {
               />
             </div>
           ) : (
-            <div className="flex flex-col gap-2 border border-accent p-2 rounded-md">
+            <div className="flex flex-col gap-2 rounded-md border border-accent p-2">
               <ADiv className="flex flex-wrap gap-2">
                 {valuesSorted.map((value) => {
                   return (
                     <span
                       key={value.label}
-                      className="badge badge-neutral badge-lg"
+                      className="badge badge-outline badge-lg"
                     >
                       <button
                         onClick={() => {
@@ -284,7 +284,7 @@ export default function CreateRoomModal(props: {
               </div>
             </div>
           )}
-          <div className="flex justify-around gap-2 items-center">
+          <div className="flex items-center justify-around gap-2">
             Special Values:
             <label className="label cursor-pointer gap-2">
               <span className="label-text">

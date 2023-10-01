@@ -138,11 +138,15 @@ model Account {
     refresh_token_expires_in Int?
     access_token             String? @db.Text
     expires_at               Int?
+    created_at               Int?
     token_type               String?
     scope                    String?
     id_token                 String? @db.Text
     session_state            String?
     user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    accountName              String?
+    accountEmail             String?
+    accountImage             String?
 
     @@unique([provider, providerAccountId])
     @@index([userId])

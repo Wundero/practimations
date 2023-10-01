@@ -37,6 +37,99 @@ export const mainRouter = createTRPCRouter({
         },
       });
     }),
+  deleteAccount: protectedProcedure.mutation(async ({ ctx }) => {
+    const { prisma, session } = ctx;
+    await prisma.result.deleteMany({
+      where: {
+        ticket: {
+          room: {
+            ownerId: session.user.id,
+          },
+        },
+      },
+    });
+    await prisma.vote.deleteMany({
+      where: {
+        OR: [
+          {
+            userId: session.user.id,
+          },
+          {
+            ticket: {
+              room: {
+                ownerId: session.user.id,
+              },
+            },
+          },
+        ],
+      },
+    });
+    await prisma.roomPointValue.deleteMany({
+      where: {
+        room: {
+          ownerId: session.user.id,
+        },
+      },
+    });
+    await prisma.category.deleteMany({
+      where: {
+        room: {
+          ownerId: session.user.id,
+        },
+      },
+    });
+    await prisma.ticket.deleteMany({
+      where: {
+        room: {
+          ownerId: session.user.id,
+        },
+      },
+    });
+    await prisma.room.deleteMany({
+      where: {
+        ownerId: session.user.id,
+      },
+    });
+    await prisma.user.delete({
+      where: {
+        id: session.user.id,
+      },
+    });
+    return true;
+  }),
+  unlinkAccount: protectedProcedure
+    .input(
+      z.object({
+        provider: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { prisma, session } = ctx;
+      const existingAccounts = await prisma.account.findMany({
+        where: {
+          userId: session.user.id,
+        },
+      });
+      if (existingAccounts.length <= 1) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Cannot unlink last account",
+        });
+      }
+      if (!existingAccounts.some((a) => a.provider === input.provider)) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not linked",
+        });
+      }
+      await prisma.account.deleteMany({
+        where: {
+          userId: session.user.id,
+          provider: input.provider,
+        },
+      });
+      return true;
+    }),
   createRoom: protectedProcedure
     .input(
       z.object({

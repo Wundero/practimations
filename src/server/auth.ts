@@ -6,9 +6,102 @@ import {
   type NextAuthOptions,
 } from "next-auth";
 import GithubProvider from "next-auth/providers/github";
+import AtlassianProvider from "next-auth/providers/atlassian";
+import GitlabProvider from "next-auth/providers/gitlab";
 
 import { env } from "~/env.mjs";
 import { prisma } from "~/server/db";
+import { LinearProvider } from "./integrations/auth/linear";
+import { NotionProvider } from "./integrations/auth/notion";
+
+function generateProviders() {
+  const providers = [];
+  if (env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET) {
+    providers.push(
+      GithubProvider({
+        clientId: env.GITHUB_CLIENT_ID,
+        clientSecret: env.GITHUB_CLIENT_SECRET,
+        profile(profile, tokens) {
+          tokens.accountName = profile.name;
+          tokens.accountEmail = profile.email;
+          tokens.accountImage = profile.avatar_url;
+          return {
+            id: profile.id.toString(),
+            name: profile.name ?? profile.login,
+            email: profile.email,
+            image: profile.avatar_url,
+          };
+        },
+      }),
+    );
+  }
+  if (env.ATLASSIAN_CLIENT_ID && env.ATLASSIAN_CLIENT_SECRET) {
+    providers.push(
+      AtlassianProvider({
+        clientId: env.ATLASSIAN_CLIENT_ID,
+        clientSecret: env.ATLASSIAN_CLIENT_SECRET,
+        authorization: {
+          params: {
+            scope:
+              "write:jira-work read:jira-work read:jira-user offline_access read:me",
+          },
+        },
+        profile(profile, tokens) {
+          tokens.accountName = profile.name;
+          tokens.accountEmail = profile.email;
+          tokens.accountImage = profile.picture;
+          return {
+            id: profile.account_id,
+            name: profile.name,
+            email: profile.email,
+            image: profile.picture,
+          };
+        },
+      }),
+    );
+  }
+  if (env.GITLAB_CLIENT_ID && env.GITLAB_CLIENT_SECRET) {
+    providers.push(
+      GitlabProvider({
+        clientId: env.GITLAB_CLIENT_ID,
+        clientSecret: env.GITLAB_CLIENT_SECRET,
+        profile(profile, tokens) {
+          tokens.accountName = profile.name ?? profile.username;
+          tokens.accountEmail = profile.email;
+          tokens.accountImage = profile.avatar_url;
+          return {
+            id: profile.id.toString(),
+            name: profile.name ?? profile.username,
+            email: profile.email,
+            image: profile.avatar_url,
+          };
+        },
+      }),
+    );
+  }
+  if (env.LINEAR_CLIENT_ID && env.LINEAR_CLIENT_SECRET) {
+    providers.push(
+      LinearProvider({
+        clientId: env.LINEAR_CLIENT_ID,
+        clientSecret: env.LINEAR_CLIENT_SECRET,
+      }),
+    );
+  }
+  if (env.NOTION_CLIENT_ID && env.NOTION_CLIENT_SECRET) {
+    providers.push(
+      NotionProvider({
+        clientId: env.NOTION_CLIENT_ID,
+        clientSecret: env.NOTION_CLIENT_SECRET,
+      }),
+    );
+  }
+  if (providers.length === 0) {
+    throw new Error(
+      "No OAuth providers configured! Please check your environment variables.",
+    );
+  }
+  return providers;
+}
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -22,6 +115,14 @@ declare module "next-auth" {
       id: string;
       // ...other properties
       // role: UserRole;
+      accounts: {
+        id: string;
+        provider: string;
+        providerAccountId: string;
+        accountName: string | null;
+        accountEmail: string | null;
+        accountImage: string | null;
+      }[];
     };
   }
 
@@ -38,20 +139,36 @@ declare module "next-auth" {
  */
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-      },
-    }),
+    session: async ({ session, user }) => {
+      const accounts = await prisma.account.findMany({
+        where: {
+          userId: user.id,
+          access_token: {
+            not: null,
+          },
+        },
+        select: {
+          accountEmail: true,
+          accountName: true,
+          accountImage: true,
+          id: true,
+          provider: true,
+          providerAccountId: true,
+        },
+      });
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: user.id,
+          accounts,
+        },
+      };
+    },
   },
   adapter: PrismaAdapter(prisma),
   providers: [
-    GithubProvider({
-      clientId: env.GITHUB_CLIENT_ID,
-      clientSecret: env.GITHUB_CLIENT_SECRET,
-    }),
+    ...generateProviders(),
     /**
      * ...add more providers here.
      *

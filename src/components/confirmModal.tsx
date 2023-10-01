@@ -18,10 +18,14 @@ export default function ConfirmModal({
       <div className="modal-box max-w-3xl">
         {props.children}
         <div className="modal-action">
-          <button className="btn" onClick={props.onClose}>
+          <button className="btn" onClick={props.onClose} disabled={loading}>
             Cancel
           </button>
-          <button className="btn btn-error" onClick={onConfirm}>
+          <button
+            className="btn btn-error"
+            onClick={onConfirm}
+            disabled={loading}
+          >
             {loading ? (
               <>
                 <div className="loading loading-spinner"></div>

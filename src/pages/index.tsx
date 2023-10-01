@@ -1,14 +1,15 @@
 import type { GetServerSideProps } from "next";
-import { signIn, useSession } from "next-auth/react";
+import { getProviders, signIn, signOut, useSession } from "next-auth/react";
 import { getServerAuthSession } from "~/server/auth";
-import { FaGithub } from "react-icons/fa";
-import { useMemo, useState } from "react";
+import { FaAtlassian, FaGithub, FaGitlab } from "react-icons/fa";
+import { useEffect, useMemo, useState } from "react";
 import CreateRoomModal from "~/components/createRoomModal";
 import { api } from "~/utils/api";
 import Link from "next/link";
-import { MdClose } from "react-icons/md";
+import { MdClose, MdLogout, MdSettings } from "react-icons/md";
 import ConfirmModal from "~/components/confirmModal";
 import { useRouter } from "next/router";
+import { LinearIcon, NotionIcon } from "~/components/icons";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getServerAuthSession(ctx);
@@ -110,22 +111,67 @@ function Unauthenticated() {
     return undefined;
   }, [router]);
 
-  return (
-    <button
-      onClick={() => {
-        if (callbackUrl) {
-          signIn("github", { callbackUrl }).catch(console.error);
-          return;
+  const [providers, setProviders] = useState<
+    | {
+        id: string;
+        name: string;
+      }[]
+    | null
+  >(null);
+
+  useEffect(() => {
+    getProviders()
+      .then((providers) => {
+        if (providers) {
+          setProviders(Object.values(providers));
         }
-        signIn("github").catch((e) => {
-          console.error(e);
-        });
-      }}
-      className="btn btn-primary btn-outline"
-    >
-      <FaGithub size={24} />
-      Sign in with GitHub
-    </button>
+      })
+      .catch(console.error);
+  }, []);
+
+  return (
+    <div className="flex flex-col gap-3">
+      {(providers ?? []).map((provider) => {
+        let IconComponent = FaGithub;
+
+        switch (provider.id) {
+          case "linear":
+            IconComponent = LinearIcon;
+            break;
+          case "notion":
+            IconComponent = NotionIcon;
+            break;
+          case "gitlab":
+            IconComponent = FaGitlab;
+            break;
+          case "atlassian":
+            IconComponent = FaAtlassian;
+            break;
+          case "github":
+          default:
+            break;
+        }
+
+        return (
+          <button
+            key={provider.id}
+            onClick={() => {
+              if (callbackUrl) {
+                signIn(provider.id, { callbackUrl }).catch(console.error);
+                return;
+              }
+              signIn(provider.id).catch((e) => {
+                console.error(e);
+              });
+            }}
+            className="btn btn-primary btn-outline"
+          >
+            <IconComponent size={24} />
+            Sign in with {provider.name}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -134,7 +180,25 @@ export default function Home() {
 
   return (
     <>
-      <main className=" flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c]">
+      <div className="absolute right-0 top-0 flex gap-4 p-4">
+        <Link href="/settings">
+          <button className="btn btn-circle" aria-label="settings">
+            <MdSettings size={24} />
+          </button>
+        </Link>
+        {session.status === "authenticated" && (
+          <button
+            className="btn btn-circle"
+            aria-label="sign out"
+            onClick={() => {
+              signOut().catch(console.error);
+            }}
+          >
+            <MdLogout size={24} />
+          </button>
+        )}
+      </div>
+      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c]">
         <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
           <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-[5rem]">
             <span className="text-[hsl(280,100%,70%)]">Practimations</span>

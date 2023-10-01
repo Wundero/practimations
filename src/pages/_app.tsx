@@ -15,7 +15,11 @@ const MyApp: AppType<{ session: Session | null }> = ({
 }) => {
   return (
     <ThemeProvider>
-      <SessionProvider session={session}>
+      <SessionProvider
+        session={session}
+        refetchWhenOffline={false}
+        refetchOnWindowFocus={false}
+      >
         <PusherProvider>
           <Head>
             <title>Practimations</title>

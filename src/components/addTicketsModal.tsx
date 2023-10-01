@@ -2,7 +2,7 @@ import { api } from "~/utils/api";
 import { HtmlDialog } from "./htmlDialog";
 import { useMemo, useRef, useState } from "react";
 import { cn } from "~/utils/cn";
-import { type Ticket, getJiraTickets } from "~/utils/jira";
+import { type Ticket, importTicketsFromFile } from "~/utils/import";
 import type { TicketType } from "@prisma/client";
 import { MdOutlineClose } from "react-icons/md";
 import { ADiv } from "~/components/aDiv";
@@ -31,7 +31,7 @@ export default function AddTicketsModal(props: {
     if (!file) {
       return;
     }
-    const tickets = await getJiraTickets(file);
+    const tickets = await importTicketsFromFile(file);
     setTickets(tickets);
   };
 

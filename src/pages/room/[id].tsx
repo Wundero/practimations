@@ -12,7 +12,6 @@ import { useRouter } from "next/router";
 import { cn } from "~/utils/cn";
 import { FaCrown } from "react-icons/fa";
 import AddTicketsModal from "~/components/addTicketsModal";
-import type { TicketType } from "@prisma/client";
 import {
   MdAdd,
   MdCheck,
@@ -25,6 +24,7 @@ import {
   MdShare,
   MdUpdate,
 } from "react-icons/md";
+import { PiExport } from "react-icons/pi";
 import { serverSideHelpers } from "~/server/api/ssr";
 import Link from "next/link";
 import type { Event, Data } from "~/server/integrations/pusher";
@@ -38,39 +38,9 @@ import { HtmlDialog } from "~/components/htmlDialog";
 import { QRCode } from "~/components/qrcode";
 import { ADiv } from "~/components/aDiv";
 import { useTheme } from "next-themes";
-
-type User = {
-  id: string;
-  name: string | null;
-  email: string | null;
-  emailVerified: Date | null;
-  image: string | null;
-};
-
-type Ticket = {
-  id: number;
-  ticketId: string;
-  title: string;
-  url: string;
-  type: TicketType;
-  roomId: number;
-};
-
-type Category = {
-  id: number;
-  name: string;
-  roomId: number;
-};
-
-type Room = {
-  id: number;
-  name: string;
-  slug: string;
-  ownerId: string;
-  tickets: Ticket[];
-  categories: Category[];
-  users: User[];
-};
+import { debounce } from "~/utils/functional";
+import { UserAvatar } from "~/components/userAvatar";
+import ExportTicketsModal from "~/components/exportTicketsModal";
 
 export async function getServerSideProps({
   params,
@@ -111,48 +81,6 @@ export async function getServerSideProps({
 }
 
 type RoomProps = InferGetServerSidePropsType<typeof getServerSideProps>;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function debounce(fn: (...args: any[]) => any, delay: number) {
-  let timeout: NodeJS.Timeout | null = null;
-  return (...args: unknown[]) => {
-    if (timeout) {
-      clearTimeout(timeout);
-    }
-    timeout = setTimeout(() => {
-      fn(...args);
-    }, delay);
-  };
-}
-function UserAvatar({ user, presence }: { user: User; presence?: boolean }) {
-  if (!user.image) {
-    return (
-      <div
-        className={cn("avatar placeholder", {
-          online: presence,
-          offline: !presence,
-        })}
-      >
-        <div className="w-8 rounded-full bg-base-300 text-base-content">
-          <span className="text-sm">{user.name?.[0] ?? "?"}</span>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={cn("avatar", {
-        online: presence,
-        offline: !presence,
-      })}
-    >
-      <div className="w-8 rounded-full">
-        <img src={user.image} alt={user.name ?? "Unknown User"} />
-      </div>
-    </div>
-  );
-}
 
 type PusherMember = {
   name: string;
@@ -551,6 +479,8 @@ function Room({ id }: RoomProps) {
 
   const [qrOpen, setQrOpen] = useState(false);
 
+  const [exportOpen, setExportOpen] = useState(false);
+
   if (!room) {
     return <div className="loading loading-spinner loading-lg"></div>;
   }
@@ -622,7 +552,7 @@ function Room({ id }: RoomProps) {
           </button>
         </div>
       </h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 order-1 justify-items-center gap-4 pt-2">
+      <div className="order-1 grid grid-cols-1 justify-items-center gap-4 pt-2 md:grid-cols-2 xl:grid-cols-4">
         <ADiv className="flex h-fit w-fit flex-col gap-2 rounded-xl border border-accent p-4">
           <span className="text-center text-lg font-bold">
             Users ({room.users.length}/{room.maxMembers})
@@ -658,7 +588,7 @@ function Room({ id }: RoomProps) {
             );
           })}
         </ADiv>
-        <ADiv className="flex h-fit w-fit flex-col gap-2 order-3 xl:order-2 rounded-xl border border-accent p-4">
+        <ADiv className="order-3 flex h-fit w-fit flex-col gap-2 rounded-xl border border-accent p-4 xl:order-2">
           <h3 className="text-center">Incomplete tickets</h3>
           {isOwner && (
             <button
@@ -816,7 +746,7 @@ function Room({ id }: RoomProps) {
             })}
         </ADiv>
 
-        <ADiv className="flex h-fit w-fit flex-col gap-2 rounded-xl order-2 xl:order-3 border border-accent p-4">
+        <ADiv className="order-2 flex h-fit w-fit flex-col gap-2 rounded-xl border border-accent p-4 xl:order-3">
           <h3 className="text-center">Current Ticket:</h3>
           <h4 className="flex justify-center gap-4">
             <Timer
@@ -1469,8 +1399,24 @@ function Room({ id }: RoomProps) {
           )}
         </ADiv>
 
-        <ADiv className="flex h-fit w-fit flex-col gap-2 rounded-xl order-4 border border-accent p-4">
-          <h3 className="text-center">Complete tickets</h3>
+        <ADiv className="relative order-4 flex h-fit w-fit flex-col gap-2 rounded-xl border border-accent p-4">
+          <h3 className="pb-2 text-center">Complete tickets</h3>
+          {room.tickets.some((ticket) => ticket.done) && (
+            <div className="absolute right-0 top-0 p-4">
+              <button
+                onClick={() => setExportOpen(true)}
+                className="btn btn-circle btn-info btn-sm text-info-content"
+                aria-label="export"
+              >
+                <PiExport size={16} />
+              </button>
+              <ExportTicketsModal
+                open={exportOpen}
+                onClose={() => setExportOpen(false)}
+                roomSlug={room.slug}
+              />
+            </div>
+          )}
           {room.tickets
             .filter((ticket) => ticket.done)
             .map((ticket) => {

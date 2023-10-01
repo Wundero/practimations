@@ -64,4 +64,9 @@ External Platform Support:
         [ ] Trello
         [ ] Notion
     OAuth:
-        [ ] JIRA
+        [x] JIRA
+        [x] Linear
+        [ ] Trello
+        [x] Notion
+        [x] Github
+        [x] Gitlab

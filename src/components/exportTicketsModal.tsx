@@ -72,8 +72,7 @@ function getNearestValue(
     let argmin = -1;
     let argdel = new Decimal(0);
     for (let i = 0; i < room.values.length; i++) {
-      const v = room.values[i]!.value;
-      console.log(typeof v, typeof value);
+      const v = new Decimal(room.values[i]!.value);
       const av = value.sub(v).abs();
       if (argmin === -1 || argdel.greaterThan(av)) {
         argmin = i;

@@ -56,7 +56,7 @@ type TicketSelectedValue =
     };
 
 function getNearestValue(
-  value: Decimal,
+  _value: Decimal | string,
   room: {
     valueRange: boolean;
     values: {
@@ -65,6 +65,7 @@ function getNearestValue(
     }[];
   },
 ) {
+  const value = new Decimal(_value);
   let nearest;
   if (room.valueRange) {
     nearest = value.toFixed(1);
@@ -72,7 +73,7 @@ function getNearestValue(
     let argmin = -1;
     let argdel = new Decimal(0);
     for (let i = 0; i < room.values.length; i++) {
-      const v = new Decimal(room.values[i]!.value);
+      const v = room.values[i]!.value;
       const av = value.sub(v).abs();
       if (argmin === -1 || argdel.greaterThan(av)) {
         argmin = i;

@@ -258,7 +258,7 @@ function QRCodeSVG({
         width="100%"
         height="100%"
         fill="white"
-        fill-opacity="0"
+        fillOpacity="0"
         cx={-coordinateShift}
         cy={-coordinateShift}
       />

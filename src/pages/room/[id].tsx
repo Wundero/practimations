@@ -41,6 +41,7 @@ import { useTheme } from "next-themes";
 import { debounce } from "~/utils/functional";
 import { UserAvatar } from "~/components/userAvatar";
 import ExportTicketsModal from "~/components/exportTicketsModal";
+import { ClientOnly } from "~/components/clientOnly";
 
 export async function getServerSideProps({
   params,
@@ -518,23 +519,25 @@ function Room({ id }: RoomProps) {
         <div>
           <HtmlDialog open={qrOpen} onClose={() => setQrOpen(false)}>
             <div className="modal-box max-w-3xl">
-              <QRCode
-                contents={`${loc}/join/${room.slug}`}
-                moduleColor="hsl(var(--bc))"
-                positionRingColor="hsl(var(--bc))"
-                positionCenterColor="hsl(var(--bc))"
-              >
-                <div className="flex justify-center">
-                  <img
-                    src={"/favicon.ico"}
-                    alt={"practimations"}
-                    className={cn({
-                      "rounded-md bg-base-content p-2":
-                        theme.resolvedTheme === "light",
-                    })}
-                  />
-                </div>
-              </QRCode>
+              <ClientOnly>
+                <QRCode
+                  contents={`${loc}/join/${room.slug}`}
+                  moduleColor="hsl(var(--bc))"
+                  positionRingColor="hsl(var(--bc))"
+                  positionCenterColor="hsl(var(--bc))"
+                >
+                  <div className="flex justify-center">
+                    <img
+                      src={"/favicon.ico"}
+                      alt={"practimations"}
+                      className={cn({
+                        "rounded-md bg-base-content p-2":
+                          theme.resolvedTheme === "light",
+                      })}
+                    />
+                  </div>
+                </QRCode>
+              </ClientOnly>
               <div className="modal-action">
                 <button className="btn" onClick={() => setQrOpen(false)}>
                   Close

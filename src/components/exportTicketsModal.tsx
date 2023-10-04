@@ -73,12 +73,12 @@ function getNearestValue(
     let argdel = new Decimal(0);
     for (let i = 0; i < room.values.length; i++) {
       const v = room.values[i]!.value;
-      if (argmin === -1) {
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      console.log(v, value, value.sub(v), value.sub(v).abs);
+      const av = value.sub(v).abs();
+      if (argmin === -1 || argdel.greaterThan(av)) {
         argmin = i;
-        argdel = value.sub(v).abs();
-      } else if (argdel.greaterThan(value.sub(v).abs())) {
-        argmin = i;
-        argdel = value.sub(v).abs();
+        argdel = av;
       }
     }
     nearest = room.values[argmin]?.display ?? value.toFixed(1);

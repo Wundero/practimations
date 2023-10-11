@@ -51,7 +51,7 @@ UI/UX:
     [x] In completed, show total sums for all categories
 
 Misc:
-    [ ] "Spectator" mode where you can only observe
+    [x] "Spectator" mode where you can only observe
 
 Timer:
     [-] Locally only

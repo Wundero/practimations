@@ -1446,6 +1446,102 @@ function Room({ id }: RoomProps) {
               />
             </div>
           )}
+          <div
+            key={"total"}
+            className={cn(
+              "flex flex-col items-center gap-2 rounded-md border-2 border-primary px-2 pb-2 pt-1",
+            )}
+          >
+            <div className="flex w-full justify-between">
+              <span className="font-bold underline">Total</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {room.categories.map((category) => {
+                const value = room.tickets
+                  .map((ticket) =>
+                    ticket.results.find(
+                      (result) => result.categoryId === category.id,
+                    ),
+                  )
+                  .reduce((acc, result) => {
+                    return acc.add(new Decimal(result?.value ?? 0));
+                  }, new Decimal(0));
+                return (
+                  <ADiv
+                    key={category.id}
+                    className=" flex flex-col gap-2 rounded-md border border-secondary bg-base-300/25 p-2"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="rounded-full bg-base-300 px-2 capitalize text-base-content">
+                        {category.name}
+                      </span>
+                      <span className="font-semibold">
+                        {(() => {
+                          if (value.isNegative()) {
+                            if (value.eq(-1)) {
+                              return "?";
+                            } else {
+                              return <BiCoffee />;
+                            }
+                          }
+                          if (room.valueRange) {
+                            return value.toFixed(1);
+                          }
+                          const disp = room.values.find((d) => {
+                            return value.eq(d.value);
+                          });
+                          return disp?.display ?? value.toFixed(1);
+                        })()}
+                      </span>
+                    </div>
+                  </ADiv>
+                );
+              })}
+              {Object.entries(algorithms).map(([algo, fn]) => {
+                const value = room.tickets
+                  .map((ticket) => fn.results(ticket))
+                  .reduce((acc, result) => {
+                    return acc.add(new Decimal(result));
+                  }, new Decimal(0));
+                let nearest;
+                if (room.valueRange) {
+                  nearest = value.toFixed(1);
+                } else {
+                  let argmin = -1;
+                  let argdel = new Decimal(0);
+                  for (let i = 0; i < room.values.length; i++) {
+                    const v = room.values[i]!.value;
+                    if (argmin === -1) {
+                      argmin = i;
+                      argdel = value.sub(v).abs();
+                    } else if (argdel.greaterThan(value.sub(v).abs())) {
+                      argmin = i;
+                      argdel = value.sub(v).abs();
+                    }
+                  }
+                  nearest = room.values[argmin]?.display ?? value.toFixed(1);
+                }
+                return (
+                  <div
+                    key={algo}
+                    className="flex items-center justify-between gap-2 rounded-md border border-secondary bg-base-300/25 p-2"
+                  >
+                    <span className="rounded-full bg-base-300 px-2 text-lg font-bold capitalize text-base-content">
+                      {algo}
+                    </span>
+
+                    {room.valueRange ? (
+                      <span className="font-bold">{value.toFixed(1)}</span>
+                    ) : (
+                      <span className="font-bold">
+                        {nearest} ({value.toFixed(1)})
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
           {room.tickets
             .filter((ticket) => ticket.done)
             .map((ticket) => {

@@ -391,6 +391,7 @@ export const mainRouter = createTRPCRouter({
           users: {
             select: {
               user: true,
+              spectator: true,
             },
           },
           categories: true,
@@ -411,6 +412,55 @@ export const mainRouter = createTRPCRouter({
         return room;
       }
       return room;
+    }),
+  setSpectating: protectedProcedure
+    .input(
+      z.object({
+        roomId: z.number(),
+        spectating: z.boolean(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { prisma, pusher, session } = ctx;
+      const room = await prisma.room.findUnique({
+        where: {
+          id: input.roomId,
+          users: {
+            some: {
+              userId: session.user.id,
+            },
+          },
+        },
+      });
+      if (!room) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Room not found",
+        });
+      }
+      await prisma.roomMember.update({
+        where: {
+          roomId_userId: {
+            roomId: input.roomId,
+            userId: session.user.id,
+          },
+        },
+        data: {
+          spectator: input.spectating,
+        },
+      });
+      await pusher.trigger({
+        event: "userSpectate",
+        channel: getChannelName(room.slug),
+        data: {
+          eventData: {
+            spectating: input.spectating,
+            userId: session.user.id,
+          },
+          ignoreUser: session.user.id,
+        },
+      });
+      return input.spectating;
     }),
   addTickets: protectedProcedure
     .input(
@@ -640,7 +690,8 @@ export const mainRouter = createTRPCRouter({
         },
       });
       const maxVoteCount =
-        ticket.room.users.length * ticket.room.categories.length;
+        ticket.room.users.filter((u) => !u.spectator).length *
+        ticket.room.categories.length;
       if (voteCount === maxVoteCount) {
         await prisma.ticket.update({
           where: {

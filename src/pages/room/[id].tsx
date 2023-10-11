@@ -10,7 +10,7 @@ import { useSession } from "next-auth/react";
 import { getServerAuthSession } from "~/server/auth";
 import { useRouter } from "next/router";
 import { cn } from "~/utils/cn";
-import { FaCrown } from "react-icons/fa";
+import { FaCrown, FaEye, FaRegCheckSquare } from "react-icons/fa";
 import AddTicketsModal from "~/components/addTicketsModal";
 import {
   MdAdd,
@@ -183,6 +183,7 @@ function Room({ id }: RoomProps) {
                     emailVerified: null,
                     currentRoomId: prev.id,
                   },
+                  spectator: false,
                 },
               ],
             };
@@ -231,6 +232,28 @@ function Room({ id }: RoomProps) {
                   };
                 }),
               ],
+            };
+          });
+          break;
+        }
+        case "userSpectate": {
+          const { eventData } = ed as Data<"userSpectate">;
+          utils.main.getRoom.setData({ slug: id }, (prev) => {
+            if (!prev) {
+              return prev;
+            }
+            return {
+              ...prev,
+              users: prev.users.map((user) => {
+                if (user.user.id === eventData.userId) {
+                  return {
+                    ...user,
+                    spectator: eventData.spectating,
+                  };
+                } else {
+                  return user;
+                }
+              }),
             };
           });
           break;
@@ -452,6 +475,7 @@ function Room({ id }: RoomProps) {
   const clearVotesMutation = api.main.clearVotes.useMutation();
   const setCanVoteMutation = api.main.setCanVote.useMutation();
   const updateTimer = api.main.updateTimer.useMutation();
+  const setSpectatingMutation = api.main.setSpectating.useMutation();
 
   const [myVotes, setMyVotes] = useState<Record<number, number>>(
     selectedTicket
@@ -470,6 +494,12 @@ function Room({ id }: RoomProps) {
 
   const isOwner = useMemo(() => {
     return session.data?.user.id === room?.ownerId;
+  }, [room, session]);
+
+  const isSpectator = useMemo(() => {
+    return room?.users.some(({ user, spectator }) => {
+      return user.id === session.data?.user.id && spectator;
+    });
   }, [room, session]);
 
   const [showCopyMsg, setShowCopyMsg] = useState(false);
@@ -558,13 +588,47 @@ function Room({ id }: RoomProps) {
             <MdShare size={16} />
           </button>
         </div>
+        <div
+          className="tooltip tooltip-bottom"
+          data-tip={isSpectator ? "Stop spectating" : "Spectate"}
+        >
+          <button
+            className="btn btn-circle btn-ghost btn-sm"
+            onClick={() => {
+              utils.main.getRoom.setData({ slug: room.slug }, (prev) => {
+                if (!prev) {
+                  return prev;
+                }
+                return {
+                  ...prev,
+                  users: prev.users.map((user) => {
+                    if (user.user.id === session.data?.user.id) {
+                      return {
+                        ...user,
+                        spectator: !user.spectator,
+                      };
+                    } else {
+                      return user;
+                    }
+                  }),
+                };
+              });
+              setSpectatingMutation.mutate({
+                roomId: room.id,
+                spectating: !isSpectator,
+              });
+            }}
+          >
+            {isSpectator ? <FaRegCheckSquare size={16} /> : <FaEye size={16} />}
+          </button>
+        </div>
       </h1>
       <div className="order-1 grid grid-cols-1 justify-items-center gap-4 pt-2 md:grid-cols-2 xl:grid-cols-4">
         <ADiv className="flex h-fit w-fit flex-col gap-2 rounded-xl border border-accent p-4">
           <span className="text-center text-lg font-bold">
             Users ({room.users.length}/{room.maxMembers})
           </span>
-          {room.users.map(({ user }) => {
+          {room.users.map(({ user, spectator }) => {
             return (
               <div
                 className="flex w-fit items-center gap-2 rounded-xl bg-base-300 px-2 py-1 text-base-content"
@@ -583,12 +647,25 @@ function Room({ id }: RoomProps) {
                     <FaCrown className="text-yellow-500" size={16} />
                   </div>
                 )}
+                {spectator && (
+                  <div
+                    className="tooltip tooltip-info tooltip-bottom"
+                    data-tip="Spectating"
+                  >
+                    <FaEye
+                      className="bg-base-300/25 text-base-content"
+                      size={16}
+                    />
+                  </div>
+                )}
                 {!!selectedTicket &&
                   selectedTicket.votes.filter((vote) => vote.userId === user.id)
-                    .length > 0 && <MdCheck className="text-success" />}
+                    .length > 0 &&
+                  !spectator && <MdCheck className="text-success" />}
                 {!!selectedTicket &&
                   selectedTicket.votes.filter((vote) => vote.userId === user.id)
-                    .length === 0 && (
+                    .length === 0 &&
+                  !spectator && (
                     <MdHourglassBottom className="text-base-content" />
                   )}
               </div>
@@ -883,7 +960,7 @@ function Room({ id }: RoomProps) {
                         <span className="rounded-full bg-base-300 px-2 capitalize text-base-content">
                           {category.name}
                         </span>
-                        {selectedTicket.voting ? (
+                        {selectedTicket.voting && !isSpectator ? (
                           <div className="flex items-center justify-end gap-4">
                             {!!selectedTicket.votes.find(
                               (v) =>
@@ -1198,7 +1275,7 @@ function Room({ id }: RoomProps) {
                       </div>
                     );
                   })}
-                  {!selectedTicket.voting &&
+                  {!(selectedTicket.voting && !isSpectator) &&
                     !selectedTicket.votes.some((v) => {
                       return new Decimal(v.value).isNegative();
                     }) && (
@@ -1254,7 +1331,7 @@ function Room({ id }: RoomProps) {
                   <button
                     className="btn"
                     disabled={
-                      !selectedTicket.voting ||
+                      !(selectedTicket.voting && !isSpectator) ||
                       Object.keys(myVotes).length < room.categories.length
                     }
                     onClick={() => {

@@ -78,6 +78,12 @@ export const pusherConfig = {
       }),
     ),
   ),
+  userSpectate: sn(
+    z.object({
+      spectating: z.boolean(),
+      userId: z.string(),
+    }),
+  ),
   userLeave: sn(
     z.object({
       user: z.string(),
@@ -107,8 +113,8 @@ export const pusherConfig = {
       start: z.date(),
       stop: z.date().nullish(),
       running: z.boolean(),
-    })
-  )
+    }),
+  ),
 } as const;
 
 export type Event = keyof typeof pusherConfig;

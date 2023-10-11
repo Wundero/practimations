@@ -85,6 +85,11 @@ export const mainRouter = createTRPCRouter({
         },
       },
     });
+    await prisma.roomMember.deleteMany({
+      where: {
+        userId: session.user.id,
+      },
+    });
     await prisma.room.deleteMany({
       where: {
         ownerId: session.user.id,
@@ -270,14 +275,9 @@ export const mainRouter = createTRPCRouter({
           roomId: room.id,
         },
       });
-      await prisma.room.update({
+      await prisma.roomMember.deleteMany({
         where: {
-          id: room.id,
-        },
-        data: {
-          users: {
-            set: [],
-          },
+          roomId: room.id,
         },
       });
       await prisma.room.delete({
@@ -391,7 +391,7 @@ export const mainRouter = createTRPCRouter({
           users: {
             select: {
               user: true,
-            }
+            },
           },
           categories: true,
           values: {

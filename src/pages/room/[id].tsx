@@ -913,62 +913,76 @@ function Room({ id }: RoomProps) {
                             )}
                             {room.valueRange ? (
                               <div className="flex items-center gap-2">
-                                {room.enableQuestion && (
-                                  <button
-                                    key={"?"}
-                                    className={cn("btn btn-sm", {
-                                      "btn-primary":
-                                        myVotes[category.id] === -1,
-                                      "btn-secondary":
-                                        selectedTicket.votes.some((vote) => {
-                                          return (
-                                            vote.userId ===
-                                              session.data?.user.id &&
-                                            vote.categoryId === category.id &&
-                                            new Decimal(vote.value).eq(-1)
-                                          );
-                                        }) && myVotes[category.id] !== -1,
-                                    })}
-                                    onClick={() => {
-                                      setMyVotes((prev) => {
-                                        return {
-                                          ...prev,
-                                          [category.id]: -1,
-                                        };
-                                      });
-                                    }}
-                                  >
-                                    ?
-                                  </button>
-                                )}
-                                {room.enableCoffee && (
-                                  <button
-                                    key={"coffee"}
-                                    className={cn("btn btn-sm", {
-                                      "btn-primary":
-                                        myVotes[category.id] === -2,
-                                      "btn-secondary":
-                                        selectedTicket.votes.some((vote) => {
-                                          return (
-                                            vote.userId ===
-                                              session.data?.user.id &&
-                                            vote.categoryId === category.id &&
-                                            new Decimal(vote.value).eq(-2)
-                                          );
-                                        }) && myVotes[category.id] !== -2,
-                                    })}
-                                    onClick={() => {
-                                      setMyVotes((prev) => {
-                                        return {
-                                          ...prev,
-                                          [category.id]: -2,
-                                        };
-                                      });
-                                    }}
-                                  >
-                                    <BiCoffee />
-                                  </button>
-                                )}
+                                {room.enableQuestion &&
+                                  (() => {
+                                    const has = myVotes[category.id] === -1;
+                                    const votedOn = selectedTicket.votes.some(
+                                      (vote) => {
+                                        return (
+                                          vote.userId ===
+                                            session.data?.user.id &&
+                                          vote.categoryId === category.id &&
+                                          new Decimal(vote.value).eq(-1)
+                                        );
+                                      },
+                                    );
+                                    return (
+                                      <button
+                                        key={"?"}
+                                        className={cn("btn btn-sm", {
+                                          "btn-primary": has && !votedOn,
+                                          "btn-secondary": votedOn && !has,
+                                          "btn-primary bg-gradient-to-br from-primary via-primary to-secondary":
+                                            has && votedOn,
+                                        })}
+                                        onClick={() => {
+                                          setMyVotes((prev) => {
+                                            return {
+                                              ...prev,
+                                              [category.id]: -1,
+                                            };
+                                          });
+                                        }}
+                                      >
+                                        ?
+                                      </button>
+                                    );
+                                  })()}
+                                {room.enableCoffee &&
+                                  (() => {
+                                    const has = myVotes[category.id] === -2;
+                                    const votedOn = selectedTicket.votes.some(
+                                      (vote) => {
+                                        return (
+                                          vote.userId ===
+                                            session.data?.user.id &&
+                                          vote.categoryId === category.id &&
+                                          new Decimal(vote.value).eq(-2)
+                                        );
+                                      },
+                                    );
+                                    return (
+                                      <button
+                                        key={"coffee"}
+                                        className={cn("btn btn-sm", {
+                                          "btn-primary": has && !votedOn,
+                                          "btn-secondary": votedOn && !has,
+                                          "btn-primary bg-gradient-to-br from-primary via-primary to-secondary":
+                                            has && votedOn,
+                                        })}
+                                        onClick={() => {
+                                          setMyVotes((prev) => {
+                                            return {
+                                              ...prev,
+                                              [category.id]: -2,
+                                            };
+                                          });
+                                        }}
+                                      >
+                                        <BiCoffee />
+                                      </button>
+                                    );
+                                  })()}
                                 <input
                                   value={(() => {
                                     const out =
@@ -1014,27 +1028,25 @@ function Room({ id }: RoomProps) {
                               <div className="flex max-w-[16rem] flex-wrap gap-2">
                                 {room.values.map((v) => {
                                   const value = new Decimal(v.value);
+                                  const has = value.eq(
+                                    myVotes[category.id] ?? -3,
+                                  );
+                                  const votedOn = value.eq(
+                                    selectedTicket.votes.find((vote) => {
+                                      return (
+                                        vote.userId === session.data?.user.id &&
+                                        vote.categoryId === category.id
+                                      );
+                                    })?.value ?? -3,
+                                  );
                                   return (
                                     <button
                                       key={v.id}
                                       className={cn("btn btn-sm", {
-                                        "btn-primary": value.eq(
-                                          myVotes[category.id] ?? -3,
-                                        ),
-                                        "btn-secondary":
-                                          value.eq(
-                                            selectedTicket.votes.find(
-                                              (vote) => {
-                                                return (
-                                                  vote.userId ===
-                                                    session.data?.user.id &&
-                                                  vote.categoryId ===
-                                                    category.id
-                                                );
-                                              },
-                                            )?.value ?? -3,
-                                          ) &&
-                                          !value.eq(myVotes[category.id] ?? -3),
+                                        "btn-primary": has && !votedOn,
+                                        "btn-secondary": votedOn && !has,
+                                        "btn-primary bg-gradient-to-br from-primary via-primary to-secondary":
+                                          has && votedOn,
                                       })}
                                       onClick={() => {
                                         setMyVotes((prev) => {
@@ -1050,62 +1062,76 @@ function Room({ id }: RoomProps) {
                                   );
                                 })}
 
-                                {room.enableQuestion && (
-                                  <button
-                                    key={"?"}
-                                    className={cn("btn btn-sm", {
-                                      "btn-primary":
-                                        myVotes[category.id] === -1,
-                                      "btn-secondary":
-                                        selectedTicket.votes.some((vote) => {
-                                          return (
-                                            vote.userId ===
-                                              session.data?.user.id &&
-                                            vote.categoryId === category.id &&
-                                            new Decimal(vote.value).eq(-1)
-                                          );
-                                        }) && myVotes[category.id] !== -1,
-                                    })}
-                                    onClick={() => {
-                                      setMyVotes((prev) => {
-                                        return {
-                                          ...prev,
-                                          [category.id]: -1,
-                                        };
-                                      });
-                                    }}
-                                  >
-                                    ?
-                                  </button>
-                                )}
-                                {room.enableCoffee && (
-                                  <button
-                                    key={"coffee"}
-                                    className={cn("btn btn-sm", {
-                                      "btn-primary":
-                                        myVotes[category.id] === -2,
-                                      "btn-secondary":
-                                        selectedTicket.votes.some((vote) => {
-                                          return (
-                                            vote.userId ===
-                                              session.data?.user.id &&
-                                            vote.categoryId === category.id &&
-                                            new Decimal(vote.value).eq(-2)
-                                          );
-                                        }) && myVotes[category.id] !== -2,
-                                    })}
-                                    onClick={() => {
-                                      setMyVotes((prev) => {
-                                        return {
-                                          ...prev,
-                                          [category.id]: -2,
-                                        };
-                                      });
-                                    }}
-                                  >
-                                    <BiCoffee />
-                                  </button>
-                                )}
+                                {room.enableQuestion &&
+                                  (() => {
+                                    const has = myVotes[category.id] === -1;
+                                    const votedOn = selectedTicket.votes.some(
+                                      (vote) => {
+                                        return (
+                                          vote.userId ===
+                                            session.data?.user.id &&
+                                          vote.categoryId === category.id &&
+                                          new Decimal(vote.value).eq(-1)
+                                        );
+                                      },
+                                    );
+                                    return (
+                                      <button
+                                        key={"?"}
+                                        className={cn("btn btn-sm", {
+                                          "btn-primary": has && !votedOn,
+                                          "btn-secondary": votedOn && !has,
+                                          "btn-primary bg-gradient-to-br from-primary via-primary to-secondary":
+                                            has && votedOn,
+                                        })}
+                                        onClick={() => {
+                                          setMyVotes((prev) => {
+                                            return {
+                                              ...prev,
+                                              [category.id]: -1,
+                                            };
+                                          });
+                                        }}
+                                      >
+                                        ?
+                                      </button>
+                                    );
+                                  })()}
+                                {room.enableCoffee &&
+                                  (() => {
+                                    const has = myVotes[category.id] === -2;
+                                    const votedOn = selectedTicket.votes.some(
+                                      (vote) => {
+                                        return (
+                                          vote.userId ===
+                                            session.data?.user.id &&
+                                          vote.categoryId === category.id &&
+                                          new Decimal(vote.value).eq(-2)
+                                        );
+                                      },
+                                    );
+                                    return (
+                                      <button
+                                        key={"coffee"}
+                                        className={cn("btn btn-sm", {
+                                          "btn-primary": has && !votedOn,
+                                          "btn-secondary": votedOn && !has,
+                                          "btn-primary bg-gradient-to-br from-primary via-primary to-secondary":
+                                            has && votedOn,
+                                        })}
+                                        onClick={() => {
+                                          setMyVotes((prev) => {
+                                            return {
+                                              ...prev,
+                                              [category.id]: -2,
+                                            };
+                                          });
+                                        }}
+                                      >
+                                        <BiCoffee />
+                                      </button>
+                                    );
+                                  })()}
                               </div>
                             )}
                           </div>

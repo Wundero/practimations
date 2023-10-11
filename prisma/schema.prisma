@@ -111,7 +111,7 @@ model Room {
 
     tickets    Ticket[]
     categories Category[]
-    users      User[]     @relation(name: "UserCurrentRoom")
+    users      RoomMember[]
 
     values         RoomPointValue[]
     valueRange     Boolean          @default(true)
@@ -125,6 +125,20 @@ model Room {
     maxMembers Int @default(100)
 
     @@index([ownerId])
+}
+
+model RoomMember {
+    room   Room @relation(fields: [roomId], references: [id])
+    roomId Int
+
+    user   User   @relation(fields: [userId], references: [id])
+    userId String
+
+    spectator Boolean @default(false)
+
+    @@id([roomId, userId])
+    @@index([roomId])
+    @@index([userId])
 }
 
 // Necessary for Next auth
@@ -171,8 +185,8 @@ model User {
     accounts      Account[]
     sessions      Session[]
 
-    ownedRooms Room[] @relation("RoomOwner")
-    allRooms   Room[] @relation("UserCurrentRoom")
+    ownedRooms Room[]       @relation("RoomOwner")
+    allRooms   RoomMember[]
     Vote       Vote[]
 }
 

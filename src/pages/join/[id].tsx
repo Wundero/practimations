@@ -46,7 +46,7 @@ export const getServerSideProps: GetServerSideProps<
     };
   }
 
-  if (room.users.some((u) => u.id === session.user.id)) {
+  if (room.users.some((u) => u.userId === session.user.id)) {
     return {
       redirect: {
         destination: `/room/${room.slug}`,
@@ -70,8 +70,8 @@ export const getServerSideProps: GetServerSideProps<
     },
     data: {
       allRooms: {
-        connect: {
-          id: room.id,
+        create: {
+          roomId: room.id,
         },
       },
     },

@@ -175,12 +175,14 @@ function Room({ id }: RoomProps) {
               users: [
                 ...prev.users,
                 {
-                  id: dx.id,
-                  name: dx.info.name,
-                  image: dx.info.image,
-                  email: null,
-                  emailVerified: null,
-                  currentRoomId: prev.id,
+                  user: {
+                    id: dx.id,
+                    name: dx.info.name,
+                    image: dx.info.image,
+                    email: null,
+                    emailVerified: null,
+                    currentRoomId: prev.id,
+                  },
                 },
               ],
             };
@@ -256,7 +258,9 @@ function Room({ id }: RoomProps) {
             }
             return {
               ...prev,
-              users: prev.users.filter((user) => user.id !== eventData.user),
+              users: prev.users.filter(
+                (user) => user.user.id !== eventData.user,
+              ),
             };
           });
           setPusherMembers((old) => {
@@ -560,7 +564,7 @@ function Room({ id }: RoomProps) {
           <span className="text-center text-lg font-bold">
             Users ({room.users.length}/{room.maxMembers})
           </span>
-          {room.users.map((user) => {
+          {room.users.map(({ user }) => {
             return (
               <div
                 className="flex w-fit items-center gap-2 rounded-xl bg-base-300 px-2 py-1 text-base-content"
@@ -1147,8 +1151,8 @@ function Room({ id }: RoomProps) {
                                     className="tooltip flex items-center gap-1"
                                     data-tip={`${
                                       room.users.find(
-                                        (user) => user.id === vote.userId,
-                                      )!.name
+                                        ({ user }) => user.id === vote.userId,
+                                      )!.user.name
                                     } @ ${customDurationFormat(
                                       intervalToDuration({
                                         start: room.timerStart!,
@@ -1159,8 +1163,8 @@ function Room({ id }: RoomProps) {
                                     <UserAvatar
                                       user={
                                         room.users.find(
-                                          (user) => user.id === vote.userId,
-                                        )!
+                                          ({ user }) => user.id === vote.userId,
+                                        )!.user
                                       }
                                       presence={pusherMembers.includes(
                                         vote.userId,
@@ -1644,15 +1648,16 @@ function Room({ id }: RoomProps) {
                                       className="tooltip flex items-center gap-1"
                                       data-tip={
                                         room.users.find(
-                                          (user) => user.id === vote.userId,
-                                        )!.name
+                                          ({ user }) => user.id === vote.userId,
+                                        )!.user.name
                                       }
                                     >
                                       <UserAvatar
                                         user={
                                           room.users.find(
-                                            (user) => user.id === vote.userId,
-                                          )!
+                                            ({ user }) =>
+                                              user.id === vote.userId,
+                                          )!.user
                                         }
                                         presence={pusherMembers.includes(
                                           vote.userId,

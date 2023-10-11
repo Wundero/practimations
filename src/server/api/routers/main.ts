@@ -204,8 +204,8 @@ export const mainRouter = createTRPCRouter({
                   },
                 },
           users: {
-            connect: {
-              id: session.user.id,
+            create: {
+              userId: session.user.id,
             },
           },
           owner: {
@@ -336,7 +336,7 @@ export const mainRouter = createTRPCRouter({
           message: "Room not found",
         });
       }
-      if (room.users.some((u) => u.id === session.user.id)) {
+      if (room.users.some((u) => u.userId === session.user.id)) {
         return room;
       }
       const user = await prisma.user.findUnique({
@@ -362,8 +362,8 @@ export const mainRouter = createTRPCRouter({
         },
         data: {
           allRooms: {
-            connect: {
-              id: room.id,
+            create: {
+              roomId: room.id,
             },
           },
         },
@@ -383,12 +383,16 @@ export const mainRouter = createTRPCRouter({
           slug: input.slug,
           users: {
             some: {
-              id: session.user.id,
+              userId: session.user.id,
             },
           },
         },
         include: {
-          users: true,
+          users: {
+            select: {
+              user: true,
+            }
+          },
           categories: true,
           values: {
             orderBy: {
@@ -577,7 +581,7 @@ export const mainRouter = createTRPCRouter({
           room: {
             users: {
               some: {
-                id: session.user.id,
+                userId: session.user.id,
               },
             },
           },

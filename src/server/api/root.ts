@@ -1,5 +1,6 @@
 import { mainRouter } from "~/server/api/routers/main";
 import { createTRPCRouter } from "~/server/api/trpc";
+import { jiraRouter } from "./routers/jira";
 
 /**
  * This is the primary router for your server.
@@ -8,6 +9,7 @@ import { createTRPCRouter } from "~/server/api/trpc";
  */
 export const appRouter = createTRPCRouter({
   main: mainRouter,
+  jira: jiraRouter,
 });
 
 // export type definition of API

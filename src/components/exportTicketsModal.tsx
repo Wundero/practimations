@@ -7,6 +7,7 @@ import Decimal from "decimal.js";
 import { cn } from "~/utils/cn";
 import algorithms from "~/utils/math";
 import { FaFileCsv, FaJira, FaTrello } from "react-icons/fa";
+import JiraExportModal from "./jiraExportModal";
 const DESTINATIONS = [
   "csv",
   "atlassian",
@@ -19,27 +20,27 @@ type Destination = (typeof DESTINATIONS)[number];
 const DestinationMap = {
   csv: {
     name: "CSV",
-    icon: <FaFileCsv />,
+    icon: <FaFileCsv size={32} />,
   },
   atlassian: {
     name: "JIRA",
     disabled: false,
-    icon: <FaJira />,
+    icon: <FaJira size={32} />,
   },
   notion: {
     name: "Notion",
     disabled: true,
-    icon: <NotionIcon />,
+    icon: <NotionIcon size={32} />,
   },
   trello: {
     name: "Trello",
     disabled: true,
-    icon: <FaTrello />,
+    icon: <FaTrello size={32} />,
   },
   linear: {
     name: "Linear",
     disabled: true,
-    icon: <LinearIcon />,
+    icon: <LinearIcon size={32} />,
   },
 } as const;
 
@@ -128,6 +129,22 @@ export default function ExportTicketsModal(props: {
       ),
   );
 
+  const [jiraOpen, setJiraOpen] = useState(false);
+
+  const jiraExport = useMemo(() => {
+    return completedTickets.map((ticket) => {
+      const ticketValue = ticketValueMap[ticket.id]!;
+      return {
+        ticketId: ticket.ticketId,
+        url: ticket.url,
+        value:
+          typeof ticketValue.value === "string"
+            ? new Decimal(ticketValue.value)
+            : ticketValue.value,
+      };
+    });
+  }, [completedTickets, ticketValueMap]);
+
   const exportAsCSV = useCallback(() => {
     const entries = completedTickets.map((ticket) => {
       const ticketValue = ticketValueMap[ticket.id]!;
@@ -167,6 +184,17 @@ export default function ExportTicketsModal(props: {
 
   return (
     <HtmlDialog {...props}>
+      <JiraExportModal
+        open={jiraOpen}
+        toExport={jiraExport}
+        onClose={() => {
+          setJiraOpen(false);
+        }}
+        onComplete={() => {
+          setJiraOpen(false);
+          props.onClose();
+        }}
+      />
       <div className="modal-box relative max-w-3xl">
         <h3 className="pb-4 text-center text-xl">Export Tickets</h3>
         <div className="flex w-full flex-col items-center justify-center">
@@ -175,38 +203,41 @@ export default function ExportTicketsModal(props: {
               Choose a method to export your tickets
             </span>
           </label>
-          <select
-            className="select select-bordered"
-            onChange={(e) => {
-              setExportDestination(e.target.value as Destination);
-            }}
-            value={exportDestination}
-          >
-            {DESTINATIONS.filter((d) => {
-              if (d === "csv") {
-                return true;
-              }
-              if (DestinationMap[d].disabled) {
-                return false;
-              }
-              const hasAccount = session?.data?.user.accounts.some((a) => {
-                return a.provider === d;
-              });
-              if (!hasAccount) {
-                return false;
-              }
-              return completedTickets.every((t) => {
-                const url = new URL(t.url);
-                return url.origin.includes(d);
-              });
-            }).map((d) => {
-              return (
-                <option className="" key={d} value={d}>
-                  {DestinationMap[d].name}
-                </option>
-              );
-            })}
-          </select>
+          <div className="flex items-center gap-3 pb-3">
+            {DestinationMap[exportDestination].icon}
+            <select
+              className="select select-bordered"
+              onChange={(e) => {
+                setExportDestination(e.target.value as Destination);
+              }}
+              value={exportDestination}
+            >
+              {DESTINATIONS.filter((d) => {
+                if (d === "csv") {
+                  return true;
+                }
+                if (DestinationMap[d].disabled) {
+                  return false;
+                }
+                const hasAccount = session?.data?.user.accounts.some((a) => {
+                  return a.provider === d;
+                });
+                if (!hasAccount) {
+                  return false;
+                }
+                return completedTickets.every((t) => {
+                  const url = new URL(t.url);
+                  return url.origin.includes(d);
+                });
+              }).map((d) => {
+                return (
+                  <option className="" key={d} value={d}>
+                    {DestinationMap[d].name}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
         </div>
         <div className="flex max-h-[60vh] flex-col gap-2 overflow-auto pt-4">
           {completedTickets.map((ticket) => {
@@ -312,6 +343,8 @@ export default function ExportTicketsModal(props: {
               if (exportDestination === "csv") {
                 exportAsCSV();
                 props.onClose();
+              } else if (exportDestination === "atlassian") {
+                setJiraOpen(true);
               }
             }}
           >

@@ -49,6 +49,7 @@ UI/UX:
     [ ] Improve keyboard experience (hotkeys)
     [x] For voting screen options, if selected AND previously voted, show as gradient purple->pink diagonally to bottom right
     [x] In completed, show total sums for all categories
+    [ ] Export section should have an <all> card
 
 Misc:
     [x] "Spectator" mode where you can only observe

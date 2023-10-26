@@ -13,6 +13,7 @@ import { env } from "~/env.mjs";
 import { prisma } from "~/server/db";
 import { LinearProvider } from "./integrations/auth/linear";
 import { NotionProvider } from "./integrations/auth/notion";
+import { refreshAnyExpired } from "./integrations/auth/refresh";
 
 function generateProviders() {
   const providers = [];
@@ -41,9 +42,12 @@ function generateProviders() {
         clientId: env.ATLASSIAN_CLIENT_ID,
         clientSecret: env.ATLASSIAN_CLIENT_SECRET,
         authorization: {
+          url: "https://auth.atlassian.com/authorize",
           params: {
             scope:
               "write:jira-work read:jira-work read:jira-user offline_access read:me",
+            audience: "api.atlassian.com",
+            prompt: "consent",
           },
         },
         profile(profile, tokens) {
@@ -140,28 +144,39 @@ declare module "next-auth" {
 export const authOptions: NextAuthOptions = {
   callbacks: {
     session: async ({ session, user }) => {
-      const accounts = await prisma.account.findMany({
+      let accounts = await prisma.account.findMany({
         where: {
           userId: user.id,
           access_token: {
             not: null,
           },
         },
-        select: {
-          accountEmail: true,
-          accountName: true,
-          accountImage: true,
-          id: true,
-          provider: true,
-          providerAccountId: true,
-        },
       });
+      accounts = await refreshAnyExpired(accounts);
       return {
         ...session,
         user: {
           ...session.user,
           id: user.id,
-          accounts,
+          accounts: accounts.map(
+            ({
+              accountEmail,
+              accountName,
+              accountImage,
+              id,
+              provider,
+              providerAccountId,
+            }) => {
+              return {
+                accountEmail,
+                accountName,
+                accountImage,
+                id,
+                provider,
+                providerAccountId,
+              };
+            },
+          ),
         },
       };
     },

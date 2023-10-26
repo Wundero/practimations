@@ -23,7 +23,8 @@ export async function refresh(account: Account) {
     }),
   });
   if (!res.ok) {
-    throw new Error(`${res.status}: ${res.statusText}`);
+    return account;
+    // throw new Error(`${res.status}: ${res.statusText}`);
   }
   const data = (await res.json()) as RefreshRes;
   return await prisma.account.update({

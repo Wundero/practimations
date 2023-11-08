@@ -132,17 +132,23 @@ export default function ExportTicketsModal(props: {
   const [jiraOpen, setJiraOpen] = useState(false);
 
   const jiraExport = useMemo(() => {
-    return completedTickets.map((ticket) => {
-      const ticketValue = ticketValueMap[ticket.id]!;
-      return {
-        ticketId: ticket.ticketId,
-        url: ticket.url,
-        value:
-          typeof ticketValue.value === "string"
-            ? new Decimal(ticketValue.value)
-            : ticketValue.value,
-      };
-    });
+    return completedTickets
+      .map((ticket) => {
+        const ticketValue = ticketValueMap[ticket.id];
+        if (!ticketValue) {
+          return null;
+        }
+        return {
+          ticketId: ticket.ticketId,
+          url: ticket.url,
+          value:
+            typeof ticketValue.value === "string"
+              ? new Decimal(ticketValue.value)
+              : ticketValue.value,
+        };
+      })
+      .filter((t) => t !== null)
+      .map((t) => t!);
   }, [completedTickets, ticketValueMap]);
 
   const exportAsCSV = useCallback(() => {

@@ -16,8 +16,9 @@ Steps:
 6. Create an OAuth app and copy the client ID and client secret into the `.env`
 - Note: To support importing/exporting, one of Atlassian, Notion and Linear is needed based on what source you want.
 7. Install dependencies with `npm install`
-8. Run locally with `npm run dev`
-9. When you are ready, fork the repo and deploy it on your deployment platform of choice.
+8. Push the settings to the database with `npx prisma db push`
+9. Run locally with `npm run dev`
+10. When you are ready, fork the repo and deploy it on your deployment platform of choice.
 
 ### Pusher -> Soketi
 If you wish to use Soketi (or other services which use the Pusher protocol), you can edit the `.env` but you will likely need to alter the code where Pusher connections are created.

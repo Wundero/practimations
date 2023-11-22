@@ -812,7 +812,8 @@ export const mainRouter = createTRPCRouter({
       z.object({
         ticketId: z.number(),
       }),
-    ).mutation(async ({ input, ctx }) => {
+    )
+    .mutation(async ({ input, ctx }) => {
       const { prisma, pusher, session } = ctx;
       const ticket = await prisma.ticket.findUnique({
         where: {
@@ -992,5 +993,30 @@ export const mainRouter = createTRPCRouter({
         },
       });
       return updatedRoom;
+    }),
+  setUserData: protectedProcedure
+    .input(
+      z.object({
+        name: z
+          .string()
+          .min(2)
+          .max(128)
+          .regex(/^[a-zA-Z0-9_\- ]+$/),
+        image: z.string().min(2).max(128).url(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { prisma, session } = ctx;
+      const user = await prisma.user.update({
+        where: {
+          id: session.user.id,
+        },
+        data: {
+          name: input.name,
+
+          image: input.image,
+        },
+      });
+      return user;
     }),
 });

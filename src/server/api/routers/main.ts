@@ -692,13 +692,14 @@ export const mainRouter = createTRPCRouter({
       const maxVoteCount =
         ticket.room.users.filter((u) => !u.spectator).length *
         ticket.room.categories.length;
-      if (voteCount === maxVoteCount) {
+      if (voteCount === maxVoteCount && ticket.autoComplete) {
         await prisma.ticket.update({
           where: {
             id: input.ticketId,
           },
           data: {
             voting: false,
+            autoComplete: false,
           },
         });
         await pusher.trigger({
@@ -806,10 +807,58 @@ export const mainRouter = createTRPCRouter({
       });
       return true;
     }),
+  rejectTicket: protectedProcedure
+    .input(
+      z.object({
+        ticketId: z.number(),
+      }),
+    ).mutation(async ({ input, ctx }) => {
+      const { prisma, pusher, session } = ctx;
+      const ticket = await prisma.ticket.findUnique({
+        where: {
+          id: input.ticketId,
+          selected: true,
+          room: {
+            ownerId: session.user.id,
+          },
+        },
+        include: {
+          room: true,
+        },
+      });
+      if (!ticket) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Ticket not found",
+        });
+      }
+      const newTicket = await prisma.ticket.update({
+        where: {
+          id: input.ticketId,
+        },
+        data: {
+          done: true,
+          selected: false,
+          rejected: true,
+        },
+      });
+      await pusher.trigger({
+        channel: getChannelName(ticket.room.slug),
+        event: "rejectTicket",
+        data: {
+          ignoreUser: session.user.id,
+          eventData: {
+            id: ticket.id,
+          },
+        },
+      });
+      return newTicket;
+    }),
   completeTicket: protectedProcedure
     .input(
       z.object({
         ticketId: z.number(),
+        overrideValue: z.number().nullish(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -874,6 +923,7 @@ export const mainRouter = createTRPCRouter({
         data: {
           done: true,
           selected: false,
+          overrideValue: input.overrideValue ?? undefined,
         },
       });
       const resultTx = await prisma.$transaction(
@@ -890,6 +940,7 @@ export const mainRouter = createTRPCRouter({
           ignoreUser: session.user.id,
           eventData: {
             id: ticket.id,
+            overrideValue: newTicket.overrideValue,
             results: resultTx,
           },
         },

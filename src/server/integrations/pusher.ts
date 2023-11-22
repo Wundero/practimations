@@ -74,6 +74,9 @@ export const pusherConfig = {
         selected: z.boolean(),
         voting: z.boolean(),
         done: z.boolean(),
+        rejected: z.boolean(),
+        autoComplete: z.boolean(),
+        overrideValue: decimalType.nullable(),
         roomId: z.number(),
       }),
     ),
@@ -95,9 +98,15 @@ export const pusherConfig = {
       id: z.number(),
     }),
   ),
+  rejectTicket: sn(
+    z.object({
+      id: z.number(),
+    }),
+  ),
   completeTicket: sn(
     z.object({
       id: z.number(),
+      overrideValue: decimalType.nullable(),
       results: z.array(
         z.object({
           id: z.bigint(),

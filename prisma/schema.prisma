@@ -73,15 +73,19 @@ model Ticket {
     url      String
     type     TicketType @default(TASK)
 
-    selected Boolean @default(false)
-    voting   Boolean @default(false)
-    done     Boolean @default(false)
+    selected     Boolean @default(false)
+    voting       Boolean @default(false)
+    autoComplete Boolean @default(true)
+    done         Boolean @default(false)
+    rejected     Boolean @default(false)
 
     room   Room @relation(fields: [roomId], references: [id])
     roomId Int
 
     votes   Vote[]
     results Result[]
+
+    overrideValue Decimal?
 
     @@unique([roomId, ticketId])
     @@index([roomId])

@@ -97,7 +97,7 @@ export default function ExportTicketsModal(props: {
 
   const completedTickets = useMemo(() => {
     if (!room?.tickets) return [];
-    return room.tickets.filter((t) => t.done);
+    return room.tickets.filter((t) => t.done && !t.rejected);
   }, [room?.tickets]);
 
   const [exportDestination, setExportDestination] =
@@ -152,18 +152,24 @@ export default function ExportTicketsModal(props: {
   }, [completedTickets, ticketValueMap]);
 
   const exportAsCSV = useCallback(() => {
-    const entries = completedTickets.map((ticket) => {
-      const ticketValue = ticketValueMap[ticket.id]!;
-      return {
-        title: ticket.title,
-        id: ticket.ticketId,
-        url: ticket.url,
-        value:
-          typeof ticketValue.value === "string"
-            ? ticketValue.value
-            : ticketValue.value.toFixed(1),
-      };
-    });
+    const entries = completedTickets
+      .map((ticket) => {
+        const ticketValue = ticketValueMap[ticket.id];
+        if (!ticketValue) {
+          return null;
+        }
+        return {
+          title: ticket.title,
+          id: ticket.ticketId,
+          url: ticket.url,
+          value:
+            typeof ticketValue.value === "string"
+              ? ticketValue.value
+              : ticketValue.value.toFixed(1),
+        };
+      })
+      .filter((t) => t !== null)
+      .map((t) => t!);
     const csv = [
       {
         // Header
@@ -246,6 +252,82 @@ export default function ExportTicketsModal(props: {
           </div>
         </div>
         <div className="flex max-h-[60vh] flex-col gap-2 overflow-auto pt-4">
+          <div key={"global"} className="flex flex-col gap-2 rounded-md p-2 bg-base-300 text-base-content">
+            <span className="rounded-md p-1 font-bold">
+              Apply to all tickets
+            </span>
+            <div className="flex flex-wrap justify-between gap-2">
+              {room?.categories.map((category) => {
+                return (
+                  <button
+                    key={category.id.toString()}
+                    className="btn"
+                    onClick={() => {
+                      setTicketValueMap(() => {
+                        return completedTickets
+                          .map((t) => {
+                            const v =
+                              t.overrideValue ??
+                              t.results.find((r) => {
+                                return r.categoryId === category.id;
+                              })!.value;
+                            return {
+                              value: getNearestValue(v, room),
+                              ticketId: t.id,
+                            };
+                          })
+                          .reduce(
+                            (acc, cur) => {
+                              acc[cur.ticketId] = {
+                                type: "category",
+                                value: cur.value,
+                                category: category.id,
+                              };
+                              return acc;
+                            },
+                            {} as Record<string, TicketSelectedValue>,
+                          );
+                      });
+                    }}
+                  >
+                    <span>{category.name}</span>
+                  </button>
+                );
+              })}
+              {Object.entries(algorithms).map(([algo, fn]) => {
+                return (
+                  <button
+                    key={algo}
+                    className="btn"
+                    onClick={() => {
+                      setTicketValueMap(() => {
+                        return completedTickets
+                          .map((t) => {
+                            return {
+                              value: getNearestValue(fn.results(t), room!),
+                              ticketId: t.id,
+                            };
+                          })
+                          .reduce(
+                            (acc, cur) => {
+                              acc[cur.ticketId] = {
+                                type: "algorithm",
+                                algorithm: algo,
+                                value: cur.value,
+                              };
+                              return acc;
+                            },
+                            {} as Record<string, TicketSelectedValue>,
+                          );
+                      });
+                    }}
+                  >
+                    <span>{algo}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           {completedTickets.map((ticket) => {
             const ticketValue = ticketValueMap[ticket.id];
             return (
@@ -268,7 +350,10 @@ export default function ExportTicketsModal(props: {
                     const category = room?.categories.find(
                       (c) => c.id === result.categoryId,
                     );
-                    const value = getNearestValue(result.value, room!);
+                    const value = getNearestValue(
+                      ticket.overrideValue ?? result.value,
+                      room!,
+                    );
                     return (
                       <button
                         key={result.id.toString()}
@@ -334,6 +419,19 @@ export default function ExportTicketsModal(props: {
                       </button>
                     );
                   })}
+                  <button
+                    key={ticket.ticketId + "-delete"}
+                    className={"btn"}
+                    onClick={() => {
+                      setTicketValueMap((prev) => {
+                        const cpy = { ...prev };
+                        delete cpy[ticket.id];
+                        return cpy;
+                      });
+                    }}
+                  >
+                    Skip
+                  </button>
                 </div>
               </div>
             );
@@ -343,7 +441,7 @@ export default function ExportTicketsModal(props: {
           <button
             className="btn"
             disabled={
-              Object.keys(ticketValueMap).length !== completedTickets.length
+              Object.keys(ticketValueMap).length === 0
             }
             onClick={() => {
               if (exportDestination === "csv") {

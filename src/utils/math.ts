@@ -11,6 +11,9 @@ type Tx = Ticket & {
 export type CalculateValue = (ticket: Tx) => Decimal;
 
 export const averageResults: CalculateValue = (ticket) => {
+  if (ticket.overrideValue !== null) {
+    return new Decimal(ticket.overrideValue);
+  }
   const { results } = ticket;
   if (!results.length) {
     return new Decimal(0);
@@ -48,6 +51,9 @@ export const averageVotes: CalculateValue = (ticket) => {
 };
 
 export const geometricAverageResults: CalculateValue = (ticket) => {
+  if (ticket.overrideValue !== null) {
+    return new Decimal(ticket.overrideValue);
+  }
   const { results } = ticket;
   if (!results.length) {
     return new Decimal(0);
@@ -69,6 +75,9 @@ export const geometricAverageVotes: CalculateValue = (ticket) => {
 };
 
 export const squareResults: CalculateValue = (ticket) => {
+  if (ticket.overrideValue !== null) {
+    return new Decimal(ticket.overrideValue);
+  }
   const { results } = ticket;
   if (!results.length) {
     return new Decimal(0);
@@ -98,6 +107,9 @@ export const squareVotes: CalculateValue = (ticket) => {
 const NONLINEAR_K = 3;
 
 export const nonlinearResults: CalculateValue = (ticket) => {
+  if (ticket.overrideValue !== null) {
+    return new Decimal(ticket.overrideValue);
+  }
   const { results } = ticket;
   if (!results.length) {
     return new Decimal(0);

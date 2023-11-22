@@ -42,6 +42,7 @@ import { debounce } from "~/utils/functional";
 import { UserAvatar } from "~/components/userAvatar";
 import ExportTicketsModal from "~/components/exportTicketsModal";
 import { ClientOnly } from "~/components/clientOnly";
+import TicketPointOverrideModal from "~/components/ticketPointOverrideModal";
 
 export async function getServerSideProps({
   params,
@@ -359,6 +360,31 @@ function Room({ id }: RoomProps) {
           });
           break;
         }
+        case "rejectTicket": {
+          const { eventData } = ed as Data<"completeTicket">;
+          utils.main.getRoom.setData({ slug: id }, (prev) => {
+            if (!prev) {
+              return prev;
+            }
+            return {
+              ...prev,
+              tickets: prev.tickets.map((ticket) => {
+                if (ticket.id === eventData.id) {
+                  return {
+                    ...ticket,
+                    done: true,
+                    voting: false,
+                    selected: false,
+                    rejected: true,
+                  };
+                } else {
+                  return ticket;
+                }
+              }),
+            };
+          });
+          break;
+        }
         case "completeTicket": {
           const { eventData } = ed as Data<"completeTicket">;
           utils.main.getRoom.setData({ slug: id }, (prev) => {
@@ -375,6 +401,7 @@ function Room({ id }: RoomProps) {
                     voting: false,
                     selected: false,
                     results: eventData.results,
+                    overrideValue: eventData.overrideValue,
                   };
                 } else {
                   return ticket;
@@ -469,6 +496,7 @@ function Room({ id }: RoomProps) {
   }, []);
 
   const deleteTicketMutation = api.main.removeTickets.useMutation();
+  const rejectTicketMutation = api.main.rejectTicket.useMutation();
   const selectTicketMutation = api.main.selectTicket.useMutation();
   const completeTicketMutation = api.main.completeTicket.useMutation();
   const voteMutation = api.main.vote.useMutation();
@@ -504,6 +532,10 @@ function Room({ id }: RoomProps) {
 
   const [showCopyMsg, setShowCopyMsg] = useState(false);
 
+  const [onOverrideComplete, setOnOverrideComplete] = useState<
+    ((v: number) => void) | null
+  >(null);
+
   const debouncedSetShowCopyMsg = useMemo(() => {
     return debounce((v: boolean) => setShowCopyMsg(v), 1000);
   }, [setShowCopyMsg]);
@@ -529,6 +561,19 @@ function Room({ id }: RoomProps) {
           </button>
         </Link>
       </div>
+
+      <TicketPointOverrideModal
+        room={room}
+        open={onOverrideComplete !== null}
+        onClose={() => setOnOverrideComplete(null)}
+        onComplete={(value) => {
+          if (onOverrideComplete) {
+            onOverrideComplete(value);
+          }
+          setOnOverrideComplete(null);
+        }}
+      />
+
       <h1 className="flex items-center justify-center gap-2 p-4 text-center text-3xl font-extrabold">
         <div className="px-2">{room.name}</div>
         <div
@@ -1503,6 +1548,97 @@ function Room({ id }: RoomProps) {
                       )}
                     </button>
                   )}
+                  {isOwner && (
+                    <button
+                      className="btn"
+                      onClick={() => {
+                        rejectTicketMutation.mutate(
+                          {
+                            ticketId: selectedTicket.id,
+                          },
+                          {
+                            onSuccess() {
+                              utils.main.getRoom
+                                .invalidate({ slug: id })
+                                .catch((e) => {
+                                  console.error(e);
+                                });
+                            },
+                          },
+                        );
+                      }}
+                    >
+                      {rejectTicketMutation.isLoading ? (
+                        <>
+                          <span className="loading loading-spinner"></span>
+                          Rejecting...
+                        </>
+                      ) : (
+                        "Reject Ticket"
+                      )}
+                    </button>
+                  )}
+                  {isOwner && (
+                    <button
+                      className="btn"
+                      disabled={
+                        selectedTicket.votes.length === 0 ||
+                        selectedTicket.voting ||
+                        selectedTicket.votes.some((v) => {
+                          return new Decimal(v.value).isNegative();
+                        })
+                      }
+                      onClick={() => {
+                        setOnOverrideComplete(() => (v: number) => {
+                          const now = new Date();
+                          utils.main.getRoom.setData(
+                            { slug: room.slug },
+                            (prev) => {
+                              if (!prev) {
+                                return prev;
+                              }
+                              return {
+                                ...prev,
+                                timer: false,
+                                timerStart: now,
+                                timerEnd: now,
+                              };
+                            },
+                          );
+                          updateTimer.mutate({
+                            roomId: room.id,
+                            running: false,
+                            start: now,
+                            stop: now,
+                          });
+                          completeTicketMutation.mutate(
+                            {
+                              ticketId: selectedTicket.id,
+                              overrideValue: v,
+                            },
+                            {
+                              onSuccess() {
+                                utils.main.getRoom
+                                  .invalidate({ slug: id })
+                                  .catch((e) => {
+                                    console.error(e);
+                                  });
+                              },
+                            },
+                          );
+                        });
+                      }}
+                    >
+                      {completeTicketMutation.isLoading ? (
+                        <>
+                          <span className="loading loading-spinner"></span>
+                          Completing ticket...
+                        </>
+                      ) : (
+                        "Manual Value"
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -1511,7 +1647,7 @@ function Room({ id }: RoomProps) {
 
         <ADiv className="relative order-4 flex h-fit w-fit flex-col gap-2 rounded-xl border border-accent p-4">
           <h3 className="pb-2 text-center">Complete tickets</h3>
-          {room.tickets.some((ticket) => ticket.done) && (
+          {room.tickets.some((ticket) => ticket.done && !ticket.rejected) && (
             <div className="absolute right-0 top-0 p-4">
               <button
                 onClick={() => setExportOpen(true)}
@@ -1540,9 +1676,11 @@ function Room({ id }: RoomProps) {
               {room.categories.map((category) => {
                 const value = room.tickets
                   .map((ticket) =>
-                    ticket.results.find(
-                      (result) => result.categoryId === category.id,
-                    ),
+                    ticket.overrideValue !== null
+                      ? { value: ticket.overrideValue }
+                      : ticket.results.find(
+                          (result) => result.categoryId === category.id,
+                        ),
                   )
                   .reduce((acc, result) => {
                     return acc.add(new Decimal(result?.value ?? 0));
@@ -1644,7 +1782,9 @@ function Room({ id }: RoomProps) {
                     <a
                       href={ticket.url}
                       target="_blank"
-                      className="font-bold underline"
+                      className={cn("font-bold underline", {
+                        "line-through": ticket.rejected,
+                      })}
                     >
                       {ticket.title}
                     </a>
@@ -1676,9 +1816,12 @@ function Room({ id }: RoomProps) {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {room.categories.map((category) => {
-                      const result = ticket.results.find(
-                        (result) => result.categoryId === category.id,
-                      );
+                      const result =
+                        ticket.overrideValue !== null
+                          ? { value: ticket.overrideValue }
+                          : ticket.results.find(
+                              (result) => result.categoryId === category.id,
+                            );
                       if (!result) {
                         return null;
                       }
@@ -1692,24 +1835,32 @@ function Room({ id }: RoomProps) {
                             <span className="rounded-full bg-base-300 px-2 capitalize text-base-content">
                               {category.name}
                             </span>
-                            <span className="font-semibold">
-                              {(() => {
-                                if (value.isNegative()) {
-                                  if (value.eq(-1)) {
-                                    return "?";
-                                  } else {
-                                    return <BiCoffee />;
+                            <div
+                              data-tip="Ticket value has been manually set"
+                              className={cn({
+                                tooltip: ticket.overrideValue !== null,
+                              })}
+                            >
+                              <span className="font-semibold">
+                                {(() => {
+                                  if (value.isNegative()) {
+                                    if (value.eq(-1)) {
+                                      return "?";
+                                    } else {
+                                      return <BiCoffee />;
+                                    }
                                   }
-                                }
-                                if (room.valueRange) {
-                                  return value.toFixed(1);
-                                }
-                                const disp = room.values.find((d) => {
-                                  return value.eq(d.value);
-                                });
-                                return disp?.display ?? value.toFixed(1);
-                              })()}
-                            </span>
+                                  if (room.valueRange) {
+                                    return value.toFixed(1);
+                                  }
+                                  const disp = room.values.find((d) => {
+                                    return value.eq(d.value);
+                                  });
+                                  return disp?.display ?? value.toFixed(1);
+                                })()}
+                                {ticket.overrideValue !== null && "*"}
+                              </span>
+                            </div>
                           </div>
                           {completedTicketShowMore.includes(ticket.id) && (
                             <div className="flex flex-wrap gap-2">
@@ -1768,48 +1919,53 @@ function Room({ id }: RoomProps) {
                         </ADiv>
                       );
                     })}
-                    {Object.entries(algorithms).map(([algo, fn]) => {
-                      const value = fn.results(ticket);
-                      let nearest;
-                      if (room.valueRange) {
-                        nearest = value.toFixed(1);
-                      } else {
-                        let argmin = -1;
-                        let argdel = new Decimal(0);
-                        for (let i = 0; i < room.values.length; i++) {
-                          const v = room.values[i]!.value;
-                          if (argmin === -1) {
-                            argmin = i;
-                            argdel = value.sub(v).abs();
-                          } else if (argdel.greaterThan(value.sub(v).abs())) {
-                            argmin = i;
-                            argdel = value.sub(v).abs();
+                    {!ticket.rejected &&
+                      Object.entries(algorithms).map(([algo, fn]) => {
+                        const value = fn.results(ticket);
+                        let nearest;
+                        if (room.valueRange) {
+                          nearest = value.toFixed(1);
+                        } else {
+                          let argmin = -1;
+                          let argdel = new Decimal(0);
+                          for (let i = 0; i < room.values.length; i++) {
+                            const v = room.values[i]!.value;
+                            if (argmin === -1) {
+                              argmin = i;
+                              argdel = value.sub(v).abs();
+                            } else if (argdel.greaterThan(value.sub(v).abs())) {
+                              argmin = i;
+                              argdel = value.sub(v).abs();
+                            }
                           }
+                          nearest =
+                            room.values[argmin]?.display ?? value.toFixed(1);
                         }
-                        nearest =
-                          room.values[argmin]?.display ?? value.toFixed(1);
-                      }
-                      return (
-                        <div
-                          key={algo}
-                          className="flex items-center justify-between gap-2 rounded-md bg-base-300/25 p-2"
-                        >
-                          <span className="rounded-full bg-base-300 px-2 text-lg font-bold capitalize text-base-content">
-                            {algo}
-                          </span>
+                        return (
+                          <div
+                            key={algo}
+                            className="flex items-center justify-between gap-2 rounded-md bg-base-300/25 p-2"
+                          >
+                            <span className="rounded-full bg-base-300 px-2 text-lg font-bold capitalize text-base-content">
+                              {algo}
+                            </span>
 
-                          {room.valueRange ? (
-                            <span className="font-bold">
-                              {value.toFixed(1)}
-                            </span>
-                          ) : (
-                            <span className="font-bold">
-                              {nearest} ({value.toFixed(1)})
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
+                            <div
+                              data-tip="Ticket value has been manually set"
+                              className={cn({
+                                tooltip: ticket.overrideValue !== null,
+                              })}
+                            >
+                              <span className="font-bold">
+                                {room.valueRange
+                                  ? value.toFixed(1)
+                                  : `${nearest} (${value.toFixed(1)})`}
+                                {ticket.overrideValue !== null && "*"}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
                   </div>
                 </div>
               );

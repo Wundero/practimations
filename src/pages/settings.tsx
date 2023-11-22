@@ -1,6 +1,6 @@
 import type { GetServerSideProps } from "next";
 import { getProviders, signIn, useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FaAtlassian, FaGithub, FaGitlab } from "react-icons/fa";
 import { getServerAuthSession } from "~/server/auth";
 import { LinearIcon, NotionIcon } from "~/components/icons";
@@ -44,8 +44,22 @@ export default function SettingsPage() {
     | null
   >(null);
 
+  const imageChoices = useMemo(() => {
+    return session.data?.user.accounts
+      .map((acc) => {
+        return acc.accountImage ?? undefined;
+      })
+      .filter((acc) => !!acc) as string[];
+  }, [session]);
+
+  const currentImage = useMemo(() => {
+    return session.data?.user.image ?? undefined;
+  }, [session]);
+
   const deleteAccountMutation = api.main.deleteAccount.useMutation();
   const unlinkAccountMutation = api.main.unlinkAccount.useMutation();
+
+  const setUserDataMutation = api.main.setUserData.useMutation();
 
   useEffect(() => {
     getProviders()
@@ -64,6 +78,20 @@ export default function SettingsPage() {
     name: string;
   } | null>(null);
 
+  const [newName, setNewName] = useState(session.data?.user.name ?? "");
+  const [newImage, setNewImage] = useState(session.data?.user.image ?? "");
+
+  const nameValid = useMemo(() => {
+    if (newName.length < 2) {
+      return false;
+    }
+    if (newName.length > 128) {
+      return false;
+    }
+    const re = /^[a-zA-Z0-9_\- ]+$/;
+    return re.test(newName);
+  }, [newName]);
+
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center gap-8">
       <div className="absolute left-0 top-0 p-4">
@@ -75,6 +103,75 @@ export default function SettingsPage() {
       </div>
       <div className="absolute top-0 p-8">
         <h1 className="text-center text-3xl font-bold">Settings</h1>
+      </div>
+      <div className="flex flex-col gap-3 rounded-md border border-accent p-4">
+        <h2 className="text-center text-xl font-semibold">User Info</h2>
+        <div className="form-control gap-4">
+          <div className="flex flex-col items-center justify-center gap-2">
+            <span className="">Name</span>
+            <input
+              className="input input-bordered"
+              name="username"
+              value={newName}
+              onChange={(e) => {
+                setNewName(e.target.value);
+              }}
+            ></input>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <span>Profile Image</span>
+            {newImage && (
+              <div className="flex items-center gap-2 rounded-lg bg-base-200 p-2">
+                <UserAvatar
+                  user={{
+                    image: newImage,
+                    name: session.data?.user.name ?? undefined,
+                  }}
+                />
+                <span>Current Picture{currentImage !== newImage && "*"}</span>
+              </div>
+            )}
+            <div className="grid grid-cols-3 gap-2">
+              {imageChoices.map((image, index) => {
+                return (
+                  <button
+                    key={index}
+                    className="btn btn-outline"
+                    onClick={() => {
+                      setNewImage(image);
+                    }}
+                  >
+                    <UserAvatar
+                      user={{
+                        image: image,
+                        name: session.data?.user.name ?? undefined,
+                      }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <button
+            className="btn btn-primary"
+            disabled={!nameValid}
+            onClick={() => {
+              setUserDataMutation.mutate(
+                { name: newName, image: newImage },
+                {
+                  onSuccess: () => {
+                    session.update().catch(console.error);
+                  },
+                  onError: (e) => {
+                    console.error(e);
+                  },
+                },
+              );
+            }}
+          >
+            Save
+          </button>
+        </div>
       </div>
       <div className="flex flex-col gap-3 rounded-md border border-accent p-4">
         <h2 className="text-center text-xl font-semibold">Accounts</h2>

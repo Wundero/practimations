@@ -328,6 +328,7 @@ export const mainRouter = createTRPCRouter({
         },
         include: {
           users: true,
+          tickets: true,
         },
       });
       if (!room) {
@@ -364,6 +365,9 @@ export const mainRouter = createTRPCRouter({
           allRooms: {
             create: {
               roomId: room.id,
+              spectator: room.tickets.some(
+                (t) => t.done || t.voting || t.rejected || t.selected,
+              ),
             },
           },
         },

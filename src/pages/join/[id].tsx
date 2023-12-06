@@ -34,6 +34,7 @@ export const getServerSideProps: GetServerSideProps<
     },
     include: {
       users: true,
+      tickets: true,
     },
   });
 
@@ -72,6 +73,9 @@ export const getServerSideProps: GetServerSideProps<
       allRooms: {
         create: {
           roomId: room.id,
+          spectator: room.tickets.some(
+            (t) => t.done || t.voting || t.rejected || t.selected,
+          ),
         },
       },
     },

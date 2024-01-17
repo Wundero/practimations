@@ -756,6 +756,14 @@ export const mainRouter = createTRPCRouter({
           categoryId: input.clear === "all" ? undefined : input.clear.category,
         },
       });
+      await prisma.ticket.update({
+        where: {
+          id: ticket.id,
+        },
+        data: {
+          autoComplete: true,
+        },
+      });
       await pusher.trigger({
         channel: getChannelName(ticket.room.slug),
         event: "clearVotes",

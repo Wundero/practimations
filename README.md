@@ -11,17 +11,11 @@ Steps:
 1. Create a database on [PlanetScale](https://planetscale.com/) (MySQL databases will work but this is easiest)
 2. Select `Prisma` from the connection options
 3. Copy the database URL into the `.env` file
-4. Create an app on [Pusher](https://pusher.com/)
+4. Create an app on [Pusher](https://pusher.com/) or [Soketi](https://soketi.app/)
 5. Copy the relevant variables into the `.env` file
 6. Create an OAuth app and copy the client ID and client secret into the `.env`
 - Note: To support importing/exporting, one of Atlassian, Notion and Linear is needed based on what source you want.
-7. Install dependencies with `npm install`
-8. Push the settings to the database with `npx prisma db push`
-9. Run locally with `npm run dev`
-10. When you are ready, fork the repo and deploy it on your deployment platform of choice.
-
-### Pusher -> Soketi
-If you wish to use Soketi (or other services which use the Pusher protocol), you can edit the `.env` but you will likely need to alter the code where Pusher connections are created.
-
-- On the server: `src/server/integrations/pusher.ts` contains the connection info
-- On the client: `src/hooks/usePusher.tsx` contains the connection info
+1. Install dependencies with `npm install`
+2. Push the settings to the database with `npx prisma db push`
+3. Run locally with `npm run dev`
+4.  When you are ready, fork the repo and deploy it on your deployment platform of choice.

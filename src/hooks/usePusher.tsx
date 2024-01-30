@@ -5,8 +5,21 @@ import { env } from "~/env.mjs";
 import { rawAPI } from "~/utils/api";
 import type { Event, Data } from "~/server/integrations/pusher";
 
+let extras = {};
+if (env.NEXT_PUBLIC_PUSHER_HOST) { // For Soketi
+  extras = {
+    disableStats: true,
+    enabledTransports: ["ws", "wss"],
+    wsHost: env.NEXT_PUBLIC_PUSHER_HOST,
+    wsPort: 443,
+    wssPort: 443,
+    forceTLS: true,
+  };
+}
+
 const pusher = new Pusher(env.NEXT_PUBLIC_PUSHER_KEY, {
-  cluster: env.NEXT_PUBLIC_PUSHER_CLUSTER,
+  cluster: env.NEXT_PUBLIC_PUSHER_CLUSTER ?? "",
+  ...extras,
   userAuthentication: {
     // These two are mandatory in TS but not used
     endpoint: "/api/pusher/auth",

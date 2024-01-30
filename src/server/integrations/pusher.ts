@@ -6,11 +6,23 @@ import superjson from "superjson";
 
 superjson.registerClass(Decimal, { identifier: "DecimalJS" });
 
+let config;
+if (env.PUSHER_HOST) { // Soketi
+  config = {
+    host: env.PUSHER_HOST,
+    port: "443",
+  };
+} else { // Pusher
+  config = {
+    cluster: env.PUSHER_CLUSTER!,
+  };
+}
+
 export const _pusher = new Pusher({
   appId: env.PUSHER_APP_ID,
   key: env.PUSHER_KEY,
   secret: env.PUSHER_SECRET,
-  cluster: env.PUSHER_CLUSTER,
+  ...config,
   useTLS: true,
 });
 

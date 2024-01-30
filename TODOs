@@ -54,8 +54,8 @@ UI/UX:
     [x] Manual overrides for points
     [x] Ability to reject ticket
     [x] "enable voting" should disable the "everyone voted -> move to discussion"
-    [ ] Name customization
-    [ ] Room name customization
+    [x] Name customization
+    [x] Room name customization
 
 Misc:
     [x] "Spectator" mode where you can only observe

@@ -6,8 +6,9 @@ import { useEffect, useMemo, useState } from "react";
 import CreateRoomModal from "~/components/createRoomModal";
 import { api } from "~/utils/api";
 import Link from "next/link";
-import { MdClose, MdLogout, MdSettings } from "react-icons/md";
+import { MdClose, MdEdit, MdLogout, MdSettings } from "react-icons/md";
 import ConfirmModal from "~/components/confirmModal";
+import EditRoomModal from "~/components/editRoomModal";
 import { useRouter } from "next/router";
 import { LinearIcon, NotionIcon } from "~/components/icons";
 
@@ -27,6 +28,7 @@ function RoomInput() {
     slug: string;
     name: string;
   } | null>(null);
+  const [editDialog, setEditDialog] = useState<string | null>(null);
 
   const myRooms = api.main.getMyRooms.useQuery();
 
@@ -45,6 +47,11 @@ function RoomInput() {
           onClose={() => setCreateDialogOpen(false)}
         />
       </div>
+      <EditRoomModal
+        open={!!editDialog}
+        slug={editDialog}
+        onClose={() => setEditDialog(null)}
+      />
       <ConfirmModal
         open={!!confirmDialog}
         onClose={() => setConfirmDialog(null)}
@@ -78,21 +85,34 @@ function RoomInput() {
           <div>No rooms yet</div>
         ) : (
           myRooms.data?.map((room) => (
-            <div className="flex items-center gap-2" key={room.slug}>
+            <div
+              className="flex items-center justify-between gap-2 rounded-lg border border-white/50 p-1"
+              key={room.slug}
+            >
               <Link href={`/join/${room.slug}`} className="link">
                 {room.name}
               </Link>
-              <button
-                className="btn btn-circle btn-ghost btn-xs"
-                onClick={() => {
-                  setConfirmDialog({
-                    slug: room.slug,
-                    name: room.name,
-                  });
-                }}
-              >
-                <MdClose />
-              </button>
+              <div>
+                <button
+                  className="btn btn-circle btn-ghost btn-xs"
+                  onClick={() => {
+                    setEditDialog(room.slug);
+                  }}
+                >
+                  <MdEdit />
+                </button>
+                <button
+                  className="btn btn-circle btn-ghost btn-xs"
+                  onClick={() => {
+                    setConfirmDialog({
+                      slug: room.slug,
+                      name: room.name,
+                    });
+                  }}
+                >
+                  <MdClose />
+                </button>
+              </div>
             </div>
           ))
         )}

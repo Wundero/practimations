@@ -222,6 +222,27 @@ export const mainRouter = createTRPCRouter({
       });
       return room;
     }),
+  editRoom: protectedProcedure
+    .input(
+      z.object({
+        slug: z.string(),
+        name: z.string(),
+        maxMembers: z.number().min(2).max(100).default(100),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { prisma } = ctx;
+      const room = await prisma.room.update({
+        where: {
+          slug: input.slug,
+        },
+        data: {
+          name: input.name,
+          maxMembers: input.maxMembers,
+        },
+      });
+      return room;
+    }),
   deleteRoom: protectedProcedure
     .input(
       z.object({

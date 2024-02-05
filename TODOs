@@ -56,6 +56,7 @@ UI/UX:
     [x] "enable voting" should disable the "everyone voted -> move to discussion"
     [x] Name customization
     [x] Room name customization
+    [ ] Allow tickets to be re-ordered (drag and drop + sorting -> order column?)
 
 Misc:
     [x] "Spectator" mode where you can only observe

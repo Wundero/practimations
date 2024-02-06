@@ -47,7 +47,7 @@ const DestinationMap = {
 type TicketSelectedValue =
   | {
       type: "category";
-      category: number;
+      category: bigint;
       value: Decimal | string;
     }
   | {

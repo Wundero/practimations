@@ -28,7 +28,7 @@ const averageAcrossCategories = (ticket: Tx) => {
       return [...acc, vote.categoryId];
     }
     return acc;
-  }, [] as number[]);
+  }, [] as bigint[]);
   return categories.reduce(
     (acc, category) => {
       const votes = ticket.votes.filter((vote) => vote.categoryId === category);
@@ -36,7 +36,7 @@ const averageAcrossCategories = (ticket: Tx) => {
       acc[category] = categoryResults.div(votes.length);
       return acc;
     },
-    {} as Record<number, Decimal>,
+    {} as Record<bigint, Decimal>,
   );
 };
 

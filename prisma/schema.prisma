@@ -12,10 +12,10 @@ datasource db {
 }
 
 model Category {
-    id     Int    @id @default(autoincrement())
+    id     BigInt    @id @default(autoincrement())
     name   String
     room   Room   @relation(fields: [roomId], references: [id])
-    roomId Int
+    roomId BigInt
 
     votes   Vote[]
     results Result[]
@@ -29,9 +29,9 @@ model Vote {
     userId     String
     user       User     @relation(fields: [userId], references: [id])
     ticket     Ticket   @relation(fields: [ticketId], references: [id])
-    ticketId   Int
+    ticketId   BigInt
     category   Category @relation(fields: [categoryId], references: [id])
-    categoryId Int
+    categoryId BigInt
 
     value Decimal
 
@@ -48,9 +48,9 @@ model Result {
     id BigInt @id @default(autoincrement())
 
     ticket     Ticket   @relation(fields: [ticketId], references: [id])
-    ticketId   Int
+    ticketId   BigInt
     category   Category @relation(fields: [categoryId], references: [id])
-    categoryId Int
+    categoryId BigInt
 
     value Decimal
 
@@ -67,7 +67,7 @@ enum TicketType {
 }
 
 model Ticket {
-    id       Int        @id @default(autoincrement())
+    id       BigInt        @id @default(autoincrement())
     ticketId String
     title    String
     url      String
@@ -80,7 +80,7 @@ model Ticket {
     rejected     Boolean @default(false)
 
     room   Room @relation(fields: [roomId], references: [id])
-    roomId Int
+    roomId BigInt
 
     votes   Vote[]
     results Result[]
@@ -92,20 +92,20 @@ model Ticket {
 }
 
 model RoomPointValue {
-    id Int @id @default(autoincrement())
+    id BigInt @id @default(autoincrement())
 
     value   Decimal
     display String
 
     room   Room @relation(fields: [roomId], references: [id])
-    roomId Int
+    roomId BigInt
 
     @@unique([roomId, value])
     @@index([roomId])
 }
 
 model Room {
-    id Int @id @default(autoincrement())
+    id BigInt @id @default(autoincrement())
 
     name String
     slug String @unique @default(cuid())
@@ -133,7 +133,7 @@ model Room {
 
 model RoomMember {
     room   Room @relation(fields: [roomId], references: [id])
-    roomId Int
+    roomId BigInt
 
     user   User   @relation(fields: [userId], references: [id])
     userId String

@@ -51,10 +51,10 @@ export const pusherConfig = {
       user: z.string(),
       votes: z.array(
         z.object({
-          categoryId: z.number(),
+          categoryId: z.bigint(),
           value: decimalType,
           id: z.bigint(),
-          ticketId: z.number(),
+          ticketId: z.bigint(),
           userId: z.string(),
           updatedAt: z.date(),
         }),
@@ -71,14 +71,14 @@ export const pusherConfig = {
     z.union([
       z.literal("all"),
       z.object({
-        category: z.number(),
+        category: z.bigint(),
       }),
     ]),
   ),
   newTickets: sn(
     z.array(
       z.object({
-        id: z.number(),
+        id: z.bigint(),
         ticketId: z.string(),
         title: z.string(),
         url: z.string(),
@@ -89,7 +89,7 @@ export const pusherConfig = {
         rejected: z.boolean(),
         autoComplete: z.boolean(),
         overrideValue: decimalType.nullable(),
-        roomId: z.number(),
+        roomId: z.bigint(),
       }),
     ),
   ),
@@ -104,26 +104,26 @@ export const pusherConfig = {
       user: z.string(),
     }),
   ),
-  deleteTickets: sn(z.array(z.number())),
+  deleteTickets: sn(z.array(z.bigint())),
   selectTicket: sn(
     z.object({
-      id: z.number(),
+      id: z.bigint(),
     }),
   ),
   rejectTicket: sn(
     z.object({
-      id: z.number(),
+      id: z.bigint(),
     }),
   ),
   completeTicket: sn(
     z.object({
-      id: z.number(),
+      id: z.bigint(),
       overrideValue: decimalType.nullable(),
       results: z.array(
         z.object({
           id: z.bigint(),
-          ticketId: z.number(),
-          categoryId: z.number(),
+          ticketId: z.bigint(),
+          categoryId: z.bigint(),
           value: decimalType,
         }),
       ),

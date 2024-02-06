@@ -10,7 +10,7 @@ import { ADiv } from "~/components/aDiv";
 export default function AddTicketsModal(props: {
   open: boolean;
   onClose: () => void;
-  roomId: number;
+  roomId: bigint;
   roomSlug: string;
 }) {
   const addTicketMutation = api.main.addTickets.useMutation();

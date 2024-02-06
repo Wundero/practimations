@@ -441,7 +441,7 @@ export const mainRouter = createTRPCRouter({
   setSpectating: protectedProcedure
     .input(
       z.object({
-        roomId: z.number(),
+        roomId: z.bigint(),
         spectating: z.boolean(),
       }),
     )
@@ -490,7 +490,7 @@ export const mainRouter = createTRPCRouter({
   addTickets: protectedProcedure
     .input(
       z.object({
-        roomId: z.number(),
+        roomId: z.bigint(),
         tickets: z.array(
           z.object({
             ticketId: z.string(),
@@ -542,8 +542,8 @@ export const mainRouter = createTRPCRouter({
   removeTickets: protectedProcedure
     .input(
       z.object({
-        roomId: z.number(),
-        tickets: z.array(z.number()),
+        roomId: z.bigint(),
+        tickets: z.array(z.bigint()),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -580,7 +580,7 @@ export const mainRouter = createTRPCRouter({
   selectTicket: protectedProcedure
     .input(
       z.object({
-        ticketId: z.number(),
+        ticketId: z.bigint(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -637,11 +637,11 @@ export const mainRouter = createTRPCRouter({
   vote: protectedProcedure
     .input(
       z.object({
-        ticketId: z.number(),
+        ticketId: z.bigint(),
         votes: z.array(
           z.object({
             value: z.number(),
-            category: z.number(),
+            category: z.bigint(),
           }),
         ),
       }),
@@ -742,11 +742,11 @@ export const mainRouter = createTRPCRouter({
   clearVotes: protectedProcedure
     .input(
       z.object({
-        ticketId: z.number(),
+        ticketId: z.bigint(),
         clear: z.union([
           z.literal("all"),
           z.object({
-            category: z.number(),
+            category: z.bigint(),
           }),
         ]),
       }),
@@ -798,7 +798,7 @@ export const mainRouter = createTRPCRouter({
   setCanVote: protectedProcedure
     .input(
       z.object({
-        ticketId: z.number(),
+        ticketId: z.bigint(),
         canVote: z.boolean(),
       }),
     )
@@ -843,7 +843,7 @@ export const mainRouter = createTRPCRouter({
   rejectTicket: protectedProcedure
     .input(
       z.object({
-        ticketId: z.number(),
+        ticketId: z.bigint(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -891,7 +891,7 @@ export const mainRouter = createTRPCRouter({
   completeTicket: protectedProcedure
     .input(
       z.object({
-        ticketId: z.number(),
+        ticketId: z.bigint(),
         overrideValue: z.number().nullish(),
       }),
     )
@@ -923,24 +923,24 @@ export const mainRouter = createTRPCRouter({
           category: true,
         },
       });
-      const catSum = new Map<number, Decimal>();
-      const catCount = new Map<number, number>();
+      const catSum = new Map<bigint, Decimal>();
+      const catCount = new Map<bigint, number>();
       votes.forEach((vote) => {
         const current = catSum.get(vote.category.id) ?? new Decimal(0);
         catSum.set(vote.category.id, current.add(vote.value));
         const currentCount = catCount.get(vote.category.id) ?? 0;
         catCount.set(vote.category.id, currentCount + 1);
       });
-      const results = new Map<number, Decimal>();
+      const results = new Map<bigint, Decimal>();
       catSum.forEach((sum, catId) => {
         const count = catCount.get(catId) ?? 0;
         results.set(catId, sum.div(count));
       });
-      const resultObj: Record<number, Decimal> = {};
+      const resultObj: Record<bigint, Decimal> = {};
       const txItems: {
         value: Decimal;
-        categoryId: number;
-        ticketId: number;
+        categoryId: bigint;
+        ticketId: bigint;
       }[] = [];
       results.forEach((value, key) => {
         resultObj[key] = value;
@@ -987,7 +987,7 @@ export const mainRouter = createTRPCRouter({
   updateTimer: protectedProcedure
     .input(
       z.object({
-        roomId: z.number(),
+        roomId: z.bigint(),
         start: z.date(),
         stop: z.date().nullish(),
         running: z.boolean(),

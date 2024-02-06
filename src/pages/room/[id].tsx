@@ -505,7 +505,7 @@ function Room({ id }: RoomProps) {
   const updateTimer = api.main.updateTimer.useMutation();
   const setSpectatingMutation = api.main.setSpectating.useMutation();
 
-  const [myVotes, setMyVotes] = useState<Record<number, number>>(
+  const [myVotes, setMyVotes] = useState<Record<bigint, number>>(
     selectedTicket
       ? selectedTicket.votes
           .filter((v) => v.userId === session.data?.user.id)
@@ -541,7 +541,7 @@ function Room({ id }: RoomProps) {
   }, [setShowCopyMsg]);
 
   const [completedTicketShowMore, setCompletedTicketShowMore] = useState<
-    number[]
+    bigint[]
   >([]);
 
   const [qrOpen, setQrOpen] = useState(false);
@@ -843,7 +843,7 @@ function Room({ id }: RoomProps) {
                               }
                               return acc;
                             },
-                            {} as Record<number, number>,
+                            {} as Record<bigint, number>,
                           ),
                         );
                         updateTimer.mutate({

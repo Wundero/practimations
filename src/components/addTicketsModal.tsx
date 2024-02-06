@@ -226,7 +226,7 @@ export default function AddTicketsModal(props: {
                     overrideValue: null,
                     votes: [],
                     results: [],
-                    id: -Math.ceil(Math.random() * 1000),
+                    id: BigInt(-Math.ceil(Math.random() * 1000)),
                   };
                 });
                 return {

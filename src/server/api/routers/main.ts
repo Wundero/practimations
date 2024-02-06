@@ -936,14 +936,14 @@ export const mainRouter = createTRPCRouter({
         const count = catCount.get(catId) ?? 0;
         results.set(catId, sum.div(count));
       });
-      const resultObj: Record<bigint, Decimal> = {};
+      const resultObj: Record<string, Decimal> = {};
       const txItems: {
         value: Decimal;
         categoryId: bigint;
         ticketId: bigint;
       }[] = [];
       results.forEach((value, key) => {
-        resultObj[key] = value;
+        resultObj[key.toString()] = value;
         txItems.push({
           value,
           categoryId: key,

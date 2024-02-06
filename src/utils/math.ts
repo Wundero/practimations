@@ -33,10 +33,10 @@ const averageAcrossCategories = (ticket: Tx) => {
     (acc, category) => {
       const votes = ticket.votes.filter((vote) => vote.categoryId === category);
       const categoryResults = votes.reduce<Decimal>((acc, vote) => acc.add(vote.value), new Decimal(0));
-      acc[category] = categoryResults.div(votes.length);
+      acc[category.toString()] = categoryResults.div(votes.length);
       return acc;
     },
-    {} as Record<bigint, Decimal>,
+    {} as Record<string, Decimal>,
   );
 };
 

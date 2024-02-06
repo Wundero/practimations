@@ -113,7 +113,7 @@ export default function ExportTicketsModal(props: {
           type: "algorithm",
           algorithm: "nonlinear",
           value: getNearestValue(a.results(t), room!),
-          ticketId: t.id,
+          ticketId: t.id.toString(),
         };
       })
       .reduce(
@@ -134,7 +134,7 @@ export default function ExportTicketsModal(props: {
   const jiraExport = useMemo(() => {
     return completedTickets
       .map((ticket) => {
-        const ticketValue = ticketValueMap[ticket.id];
+        const ticketValue = ticketValueMap[ticket.id.toString()];
         if (!ticketValue) {
           return null;
         }
@@ -154,7 +154,7 @@ export default function ExportTicketsModal(props: {
   const exportAsCSV = useCallback(() => {
     const entries = completedTickets
       .map((ticket) => {
-        const ticketValue = ticketValueMap[ticket.id];
+        const ticketValue = ticketValueMap[ticket.id.toString()];
         if (!ticketValue) {
           return null;
         }
@@ -278,7 +278,7 @@ export default function ExportTicketsModal(props: {
                           })
                           .reduce(
                             (acc, cur) => {
-                              acc[cur.ticketId] = {
+                              acc[cur.ticketId.toString()] = {
                                 type: "category",
                                 value: cur.value,
                                 category: category.id,
@@ -310,7 +310,7 @@ export default function ExportTicketsModal(props: {
                           })
                           .reduce(
                             (acc, cur) => {
-                              acc[cur.ticketId] = {
+                              acc[cur.ticketId.toString()] = {
                                 type: "algorithm",
                                 algorithm: algo,
                                 value: cur.value,
@@ -329,14 +329,14 @@ export default function ExportTicketsModal(props: {
             </div>
           </div>
           {completedTickets.map((ticket) => {
-            const ticketValue = ticketValueMap[ticket.id];
+            const ticketValue = ticketValueMap[ticket.id.toString()];
             return (
               <div
                 key={ticket.id}
                 className={cn("flex flex-col gap-2 rounded-md p-2", {
-                  "bg-base-300 text-base-content": !ticketValueMap[ticket.id],
+                  "bg-base-300 text-base-content": !ticketValueMap[ticket.id.toString()],
                   "bg-secondary text-secondary-content":
-                    !!ticketValueMap[ticket.id],
+                    !!ticketValueMap[ticket.id.toString()],
                 })}
               >
                 <a
@@ -367,7 +367,7 @@ export default function ExportTicketsModal(props: {
                           setTicketValueMap((prev) => {
                             return {
                               ...prev,
-                              [ticket.id]: {
+                              [ticket.id.toString()]: {
                                 type: "category",
                                 category: category!.id,
                                 value,
@@ -399,7 +399,7 @@ export default function ExportTicketsModal(props: {
                           setTicketValueMap((prev) => {
                             return {
                               ...prev,
-                              [ticket.id]: {
+                              [ticket.id.toString()]: {
                                 type: "algorithm",
                                 algorithm: algo,
                                 value,
@@ -425,7 +425,7 @@ export default function ExportTicketsModal(props: {
                     onClick={() => {
                       setTicketValueMap((prev) => {
                         const cpy = { ...prev };
-                        delete cpy[ticket.id];
+                        delete cpy[ticket.id.toString()];
                         return cpy;
                       });
                     }}

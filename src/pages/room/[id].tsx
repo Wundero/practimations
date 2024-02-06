@@ -505,14 +505,14 @@ function Room({ id }: RoomProps) {
   const updateTimer = api.main.updateTimer.useMutation();
   const setSpectatingMutation = api.main.setSpectating.useMutation();
 
-  const [myVotes, setMyVotes] = useState<Record<bigint, number>>(
+  const [myVotes, setMyVotes] = useState<Record<string, number>>(
     selectedTicket
       ? selectedTicket.votes
           .filter((v) => v.userId === session.data?.user.id)
           .reduce((acc, vote) => {
             return {
               ...acc,
-              [vote.categoryId]: new Decimal(vote.value).toNumber(),
+              [vote.categoryId.toString()]: new Decimal(vote.value).toNumber(),
             };
           }, {})
       : {},
@@ -825,13 +825,13 @@ function Room({ id }: RoomProps) {
                           room.categories.reduce(
                             (acc, category) => {
                               if (room.valueRange) {
-                                acc[category.id] = new Decimal(
+                                acc[category.id.toString()] = new Decimal(
                                   room.values.find(
                                     (v) => v.display === "min",
                                   )!.value,
                                 ).toNumber();
                               } else {
-                                acc[category.id] = room.values
+                                acc[category.id.toString()] = room.values
                                   .map((v) => ({
                                     ...v,
                                     value: new Decimal(v.value),
@@ -843,7 +843,7 @@ function Room({ id }: RoomProps) {
                               }
                               return acc;
                             },
-                            {} as Record<bigint, number>,
+                            {} as Record<string, number>,
                           ),
                         );
                         updateTimer.mutate({
@@ -1041,7 +1041,7 @@ function Room({ id }: RoomProps) {
                               <div className="flex items-center gap-2">
                                 {room.enableQuestion &&
                                   (() => {
-                                    const has = myVotes[category.id] === -1;
+                                    const has = myVotes[category.id.toString()] === -1;
                                     const votedOn = selectedTicket.votes.some(
                                       (vote) => {
                                         return (
@@ -1065,7 +1065,7 @@ function Room({ id }: RoomProps) {
                                           setMyVotes((prev) => {
                                             return {
                                               ...prev,
-                                              [category.id]: -1,
+                                              [category.id.toString()]: -1,
                                             };
                                           });
                                         }}
@@ -1076,7 +1076,7 @@ function Room({ id }: RoomProps) {
                                   })()}
                                 {room.enableCoffee &&
                                   (() => {
-                                    const has = myVotes[category.id] === -2;
+                                    const has = myVotes[category.id.toString()] === -2;
                                     const votedOn = selectedTicket.votes.some(
                                       (vote) => {
                                         return (
@@ -1100,7 +1100,7 @@ function Room({ id }: RoomProps) {
                                           setMyVotes((prev) => {
                                             return {
                                               ...prev,
-                                              [category.id]: -2,
+                                              [category.id.toString()]: -2,
                                             };
                                           });
                                         }}
@@ -1112,7 +1112,7 @@ function Room({ id }: RoomProps) {
                                 <input
                                   value={(() => {
                                     const out =
-                                      myVotes[category.id] ??
+                                      myVotes[category.id.toString()] ??
                                       new Decimal(
                                         room.values.find(
                                           (v) => v.display === "min",
@@ -1132,7 +1132,7 @@ function Room({ id }: RoomProps) {
                                     setMyVotes((prev) => {
                                       return {
                                         ...prev,
-                                        [category.id]: value,
+                                        [category.id.toString()]: value,
                                       };
                                     });
                                   }}
@@ -1155,7 +1155,7 @@ function Room({ id }: RoomProps) {
                                 {room.values.map((v) => {
                                   const value = new Decimal(v.value);
                                   const has = value.eq(
-                                    myVotes[category.id] ?? -3,
+                                    myVotes[category.id.toString()] ?? -3,
                                   );
                                   const votedOn = value.eq(
                                     selectedTicket.votes.find((vote) => {
@@ -1178,7 +1178,7 @@ function Room({ id }: RoomProps) {
                                         setMyVotes((prev) => {
                                           return {
                                             ...prev,
-                                            [category.id]: value.toNumber(),
+                                            [category.id.toString()]: value.toNumber(),
                                           };
                                         });
                                       }}
@@ -1190,7 +1190,7 @@ function Room({ id }: RoomProps) {
 
                                 {room.enableQuestion &&
                                   (() => {
-                                    const has = myVotes[category.id] === -1;
+                                    const has = myVotes[category.id.toString()] === -1;
                                     const votedOn = selectedTicket.votes.some(
                                       (vote) => {
                                         return (
@@ -1214,7 +1214,7 @@ function Room({ id }: RoomProps) {
                                           setMyVotes((prev) => {
                                             return {
                                               ...prev,
-                                              [category.id]: -1,
+                                              [category.id.toString()]: -1,
                                             };
                                           });
                                         }}
@@ -1225,7 +1225,7 @@ function Room({ id }: RoomProps) {
                                   })()}
                                 {room.enableCoffee &&
                                   (() => {
-                                    const has = myVotes[category.id] === -2;
+                                    const has = myVotes[category.id.toString()] === -2;
                                     const votedOn = selectedTicket.votes.some(
                                       (vote) => {
                                         return (
@@ -1249,7 +1249,7 @@ function Room({ id }: RoomProps) {
                                           setMyVotes((prev) => {
                                             return {
                                               ...prev,
-                                              [category.id]: -2,
+                                              [category.id.toString()]: -2,
                                             };
                                           });
                                         }}
@@ -1384,7 +1384,7 @@ function Room({ id }: RoomProps) {
                         {
                           ticketId: selectedTicket.id,
                           votes: room.categories.map((category) => {
-                            const voteValue = myVotes[category.id] ?? 1;
+                            const voteValue = myVotes[category.id.toString()] ?? 1;
                             return {
                               category: category.id,
                               value: voteValue,

@@ -33,7 +33,7 @@ import algorithms from "~/utils/math";
 import { BiCoffee } from "react-icons/bi";
 import Decimal from "decimal.js";
 import { useNow } from "~/hooks/useNow";
-import { intervalToDuration } from "date-fns";
+import { intervalToDuration, type Duration } from "date-fns";
 import { HtmlDialog } from "~/components/htmlDialog";
 import { QRCode } from "~/components/qrcode";
 import { ADiv } from "~/components/aDiv";

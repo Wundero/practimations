@@ -21,7 +21,6 @@ model Category {
     results Result[]
 
     @@unique([roomId, name])
-    @@index([roomId])
 }
 
 model Vote {
@@ -39,8 +38,6 @@ model Vote {
 
     @@unique([userId, ticketId, categoryId])
     @@index([ticketId])
-    @@index([categoryId])
-    @@index([userId])
     @@index([categoryId, ticketId])
 }
 
@@ -55,7 +52,6 @@ model Result {
     value Decimal
 
     @@index([ticketId])
-    @@index([categoryId])
     @@index([categoryId, ticketId])
 }
 
@@ -88,7 +84,6 @@ model Ticket {
     overrideValue Decimal?
 
     @@unique([roomId, ticketId])
-    @@index([roomId])
 }
 
 model RoomPointValue {
@@ -101,7 +96,6 @@ model RoomPointValue {
     roomId BigInt
 
     @@unique([roomId, value])
-    @@index([roomId])
 }
 
 model Room {
@@ -141,7 +135,6 @@ model RoomMember {
     spectator Boolean @default(false)
 
     @@id([roomId, userId])
-    @@index([roomId])
     @@index([userId])
 }
 

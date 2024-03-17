@@ -61,7 +61,7 @@ export default function TicketPointOverrideModal(props: {
                 const has = vx.eq(value ?? -3);
                 return (
                   <button
-                    key={v.id}
+                    key={v.id.toString()}
                     className={cn("btn btn-sm", {
                       "btn-primary": has,
                     })}

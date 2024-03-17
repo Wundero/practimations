@@ -7,6 +7,7 @@ import { MdOutlineClose } from "react-icons/md";
 import { BiCoffee } from "react-icons/bi";
 import { ADiv } from "./aDiv";
 import TemplateModal from "./templateModal";
+import Decimal from "decimal.js";
 
 type Value = {
   value: number;
@@ -280,7 +281,7 @@ export default function CreateRoomModal(props: {
                         setValues(
                           template.values.map((v) => ({
                             label: v.display,
-                            value: v.value.toNumber(),
+                            value: new Decimal(v.value).toNumber(),
                           })),
                         );
                       }

@@ -135,6 +135,95 @@ export const mainRouter = createTRPCRouter({
       });
       return true;
     }),
+  getTemplates: protectedProcedure.query(async ({ ctx }) => {
+    const { prisma } = ctx;
+    const templates = await prisma.roomPointTemplate.findMany({
+      where: {
+        ownerId: ctx.session.user.id,
+      },
+      include: {
+        values: true,
+      },
+    });
+    return templates;
+  }),
+  createTemplate: protectedProcedure
+    .input(
+      z.object({
+        name: z.string(),
+        values: z
+          .array(
+            z.object({
+              display: z.string(),
+              value: z.number().min(0).max(100),
+            }),
+          )
+          .min(1)
+          .max(15),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { prisma, session } = ctx;
+      const userTemplateCount = await prisma.roomPointTemplate.count({
+        where: {
+          ownerId: session.user.id,
+        },
+      });
+      if (userTemplateCount >= 10) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "User has too many templates",
+        });
+      }
+      const { name, values } = input;
+      const template = await prisma.roomPointTemplate.create({
+        data: {
+          name,
+          ownerId: session.user.id,
+          values: {
+            createMany: {
+              data: values,
+            },
+          },
+        },
+        include: {
+          values: true,
+        },
+      });
+      return template;
+    }),
+  deleteTemplate: protectedProcedure
+    .input(
+      z.object({
+        id: z.bigint(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { prisma, session } = ctx;
+      const template = await prisma.roomPointTemplate.findUnique({
+        where: {
+          id: input.id,
+          ownerId: session.user.id,
+        },
+      });
+      if (!template) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Template not found",
+        });
+      }
+      await prisma.roomPointTemplateValue.deleteMany({
+        where: {
+          templateId: template.id,
+        },
+      });
+      await prisma.roomPointTemplate.delete({
+        where: {
+          id: template.id,
+        },
+      });
+      return true;
+    }),
   createRoom: protectedProcedure
     .input(
       z.object({

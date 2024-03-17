@@ -12,7 +12,7 @@ datasource db {
 }
 
 model Category {
-    id     BigInt    @id @default(autoincrement())
+    id     BigInt @id @default(autoincrement())
     name   String
     room   Room   @relation(fields: [roomId], references: [id])
     roomId BigInt
@@ -63,7 +63,7 @@ enum TicketType {
 }
 
 model Ticket {
-    id       BigInt        @id @default(autoincrement())
+    id       BigInt     @id @default(autoincrement())
     ticketId String
     title    String
     url      String
@@ -75,7 +75,7 @@ model Ticket {
     done         Boolean @default(false)
     rejected     Boolean @default(false)
 
-    room   Room @relation(fields: [roomId], references: [id])
+    room   Room   @relation(fields: [roomId], references: [id])
     roomId BigInt
 
     votes   Vote[]
@@ -92,7 +92,7 @@ model RoomPointValue {
     value   Decimal
     display String
 
-    room   Room @relation(fields: [roomId], references: [id])
+    room   Room   @relation(fields: [roomId], references: [id])
     roomId BigInt
 
     @@unique([roomId, value])
@@ -126,7 +126,7 @@ model Room {
 }
 
 model RoomMember {
-    room   Room @relation(fields: [roomId], references: [id])
+    room   Room   @relation(fields: [roomId], references: [id])
     roomId BigInt
 
     user   User   @relation(fields: [userId], references: [id])
@@ -136,6 +136,31 @@ model RoomMember {
 
     @@id([roomId, userId])
     @@index([userId])
+}
+
+model RoomPointTemplateValue {
+    id BigInt @id @default(autoincrement())
+
+    value   Decimal
+    display String
+
+    template   RoomPointTemplate @relation(fields: [templateId], references: [id])
+    templateId BigInt
+
+    @@unique([templateId, value])
+}
+
+model RoomPointTemplate {
+    id BigInt @id @default(autoincrement())
+
+    name String
+
+    owner   User   @relation(fields: [ownerId], references: [id])
+    ownerId String
+
+    values RoomPointTemplateValue[]
+
+    @@index([ownerId])
 }
 
 // Necessary for Next auth
@@ -182,9 +207,10 @@ model User {
     accounts      Account[]
     sessions      Session[]
 
-    ownedRooms Room[]       @relation("RoomOwner")
-    allRooms   RoomMember[]
-    Vote       Vote[]
+    ownedRooms        Room[]              @relation("RoomOwner")
+    allRooms          RoomMember[]
+    votes              Vote[]
+    templates RoomPointTemplate[]
 }
 
 model VerificationToken {

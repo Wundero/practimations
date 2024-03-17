@@ -6,6 +6,7 @@ import { cn } from "~/utils/cn";
 import { MdOutlineClose } from "react-icons/md";
 import { BiCoffee } from "react-icons/bi";
 import { ADiv } from "./aDiv";
+import TemplateModal from "./templateModal";
 
 type Value = {
   value: number;
@@ -65,6 +66,7 @@ export default function CreateRoomModal(props: {
   onClose: () => void;
 }) {
   const createMutation = api.main.createRoom.useMutation();
+  const myTemplates = api.main.getTemplates.useQuery();
 
   const router = useRouter();
 
@@ -88,6 +90,8 @@ export default function CreateRoomModal(props: {
   const [maxMembers, setMaxMembers] = useState(100);
 
   const [loading, setLoading] = useState(false);
+
+  const [customTemplateModalOpen, setCustomTemplateModalOpen] = useState(false);
 
   return (
     <HtmlDialog {...props}>
@@ -208,6 +212,11 @@ export default function CreateRoomModal(props: {
             </div>
           ) : (
             <div className="flex flex-col gap-2 rounded-md border border-accent p-2">
+              <TemplateModal
+                open={customTemplateModalOpen}
+                onClose={() => setCustomTemplateModalOpen(false)}
+                values={valuesSorted}
+              />
               <ADiv className="flex flex-wrap gap-2">
                 {valuesSorted.map((value) => {
                   return (
@@ -263,7 +272,21 @@ export default function CreateRoomModal(props: {
                 <select
                   className="select select-bordered"
                   onChange={(e) => {
-                    const template = templates[+e.target.value];
+                    const ind = +e.target.value;
+                    if (ind >= templates.length) {
+                      const template =
+                        myTemplates.data?.[ind - templates.length];
+                      if (template) {
+                        setValues(
+                          template.values.map((v) => ({
+                            label: v.display,
+                            value: v.value.toNumber(),
+                          })),
+                        );
+                      }
+                      return;
+                    }
+                    const template = templates[ind];
                     if (template) {
                       setValues(template.values);
                     }
@@ -280,7 +303,22 @@ export default function CreateRoomModal(props: {
                       </option>
                     );
                   })}
+                  {myTemplates.data?.map((t, i) => {
+                    return (
+                      <option key={t.name} value={templates.length + i}>
+                        {t.name}
+                      </option>
+                    );
+                  })}
                 </select>
+                <button
+                  className="btn btn-ghost"
+                  onClick={() => {
+                    setCustomTemplateModalOpen(true);
+                  }}
+                >
+                  Manage custom templates
+                </button>
               </div>
             </div>
           )}

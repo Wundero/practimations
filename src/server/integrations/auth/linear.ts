@@ -1,6 +1,6 @@
 import { LinearClient } from "@linear/sdk";
 import type { TokenSet } from "next-auth";
-import type { OAuthConfig } from "next-auth/providers";
+import type { OAuthConfig } from "next-auth/providers/oauth";
 
 export type LinearOptions = Partial<
   Omit<

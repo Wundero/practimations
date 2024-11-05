@@ -1,4 +1,4 @@
-import type { OAuthConfig } from "next-auth/providers";
+import type { OAuthConfig } from "next-auth/providers/oauth";
 
 export type NotionOptions = Partial<
   Omit<

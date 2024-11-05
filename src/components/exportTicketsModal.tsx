@@ -147,8 +147,7 @@ export default function ExportTicketsModal(props: {
               : ticketValue.value,
         };
       })
-      .filter((t) => t !== null)
-      .map((t) => t!);
+      .filter((t) => t !== null);
   }, [completedTickets, ticketValueMap]);
 
   const exportAsCSV = useCallback(() => {
@@ -168,8 +167,7 @@ export default function ExportTicketsModal(props: {
               : ticketValue.value.toFixed(1),
         };
       })
-      .filter((t) => t !== null)
-      .map((t) => t!);
+      .filter((t) => t !== null);
     const csv = [
       {
         // Header
